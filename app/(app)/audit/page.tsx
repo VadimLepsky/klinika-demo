@@ -1,0 +1,135 @@
+import { ArrowRight, History } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { EntityFilter } from "@/components/audit/entity-filter"
+import { ValueDiff } from "@/components/audit/value-diff"
+import { getAuditEntities, getAuditLog } from "@/lib/queries/audit"
+import { entityLabel } from "@/lib/labels"
+import { formatDateTime } from "@/lib/format"
+
+export const metadata = { title: "Historie změn — demo.clinic" }
+
+export const dynamic = "force-dynamic"
+
+const ACTION_LABEL: Record<string, string> = {
+  "rate.update": "Změna sazby",
+  "source.map": "Zdroj přiřazen",
+  "source.non_commission": "Zdroj bez provize",
+  "source.update": "Zdroj aktualizován",
+  "staff.flag": "Označení zaměstnance",
+  "staff.update": "Zaměstnanec aktualizován",
+  "category.map": "Kategorie přiřazena",
+  "period.freeze": "Měsíc uzavřen",
+  "service_exclusion.create": "Přidána výjimka",
+  "service_exclusion.end": "Ukončena výjimka",
+  "bucket.create": "Vytvořena skupina",
+  "bucket.update": "Změněna skupina",
+  "bucket.delete": "Smazána skupina",
+  "unmatched.add_service": "Přidána služba",
+  "unmatched.ignore": "Položka ignorována",
+  "unmatched.unignore": "Položka vrácena",
+}
+
+export default async function AuditPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ entity?: string }>
+}) {
+  const { entity } = await searchParams
+  const [entities, entries] = await Promise.all([
+    getAuditEntities(),
+    getAuditLog(entity, 200),
+  ])
+
+  return (
+    <div className="flex flex-col gap-6">
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Historie změn</h1>
+          <p className="text-sm text-muted-foreground">
+            Každá změna pravidel je trvale zaznamenána — kdo, kdy a co změnil.
+          </p>
+        </div>
+        <EntityFilter entities={entities} current={entity ?? ""} />
+      </header>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <History className="size-4 text-muted-foreground" />
+            Poslední změny
+          </CardTitle>
+          <CardDescription>
+            {entries.length > 0
+              ? `Zobrazeno ${entries.length} záznamů${entity ? ` — ${entityLabel(entity)}` : ""}.`
+              : "Žádné záznamy."}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="overflow-x-auto px-0 pb-0">
+          <Table className="table-fixed w-full min-w-[900px]">
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[150px] pl-6">Kdy</TableHead>
+                <TableHead className="w-[180px]">Kdo</TableHead>
+                <TableHead className="w-[170px]">Akce</TableHead>
+                <TableHead className="w-[160px]">Objekt</TableHead>
+                <TableHead>Původně</TableHead>
+                <TableHead className="pr-6">Nově</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {entries.length > 0 ? (
+                entries.map((e) => (
+                  <TableRow key={e.id}>
+                    <TableCell className="pl-6 whitespace-nowrap text-sm text-muted-foreground tabular-nums">
+                      {formatDateTime(e.at)}
+                    </TableCell>
+                    <TableCell
+                      className="max-w-0 truncate text-sm text-foreground"
+                      title={e.user_email ?? "systém"}
+                    >
+                      {e.user_email ?? "systém"}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      <Badge variant="outline" className="font-normal">
+                        {ACTION_LABEL[e.action] ?? e.action}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="max-w-0 text-sm">
+                      <span className="flex flex-col">
+                        <span className="truncate text-foreground" title={entityLabel(e.entity)}>
+                          {entityLabel(e.entity)}
+                        </span>
+                        {e.entity_id ? (
+                          <span className="truncate text-xs text-muted-foreground tabular-nums">
+                            #{e.entity_id}
+                          </span>
+                        ) : null}
+                      </span>
+                    </TableCell>
+                    <TableCell className="align-top">
+                      <ValueDiff value={e.old_value} />
+                    </TableCell>
+                    <TableCell className="pr-6 align-top">
+                      <span className="flex items-start gap-1.5">
+                        <ArrowRight className="mt-0.5 size-3 shrink-0 text-muted-foreground" />
+                        <ValueDiff value={e.new_value} />
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
+                    Filtru neodpovídají žádné záznamy.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
