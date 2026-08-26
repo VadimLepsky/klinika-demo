@@ -1,8 +1,4 @@
 import "server-only";
-import { cookies } from "next/headers";
-import { SESSION_COOKIE } from "@/lib/session-cookie";
-
-export { SESSION_COOKIE };
 
 export type Role = "admin" | "viewer";
 
@@ -13,46 +9,26 @@ export type SessionUser = {
   role: Role;
 };
 
-/** Demo account — the sign-in screen is part of the product, so it stays. */
-export const DEMO_EMAIL = "spravce@demo.clinic";
-export const DEMO_PASSWORD = "demo1234";
-
-export const DEMO_USERS: (SessionUser & { password: string })[] = [
-  {
-    id: "1",
-    email: DEMO_EMAIL,
-    full_name: "Petr Zeman",
-    role: "admin",
-    password: DEMO_PASSWORD,
-  },
-];
-
-export const SESSION_MAX_AGE = 60 * 60 * 24 * 14;
-
-export function findUser(email: string): SessionUser | null {
-  const found = DEMO_USERS.find((u) => u.email === email.trim().toLowerCase());
-  if (!found) return null;
-  const { password: _password, ...user } = found;
-  return user;
-}
+/**
+ * The demo has no sign-in step — the dashboard opens straight away and every
+ * change is attributed to this single account in the audit log.
+ */
+export const DEMO_USER: SessionUser = {
+  id: "1",
+  email: "spravce@demo.clinic",
+  full_name: "Petr Zeman",
+  role: "admin",
+};
 
 export async function getSessionUser(): Promise<SessionUser | null> {
-  const store = await cookies();
-  const email = store.get(SESSION_COOKIE)?.value;
-  if (!email) return null;
-  return findUser(email);
+  return DEMO_USER;
 }
 
-/** Any signed-in user. */
 export async function requireUser(): Promise<string> {
-  const user = await getSessionUser();
-  if (!user) throw new Error("UNAUTHORIZED");
-  return user.email;
+  return DEMO_USER.email;
 }
 
 /** The email recorded in the audit log for every rule mutation. */
 export async function getActorEmail(): Promise<string> {
-  const user = await getSessionUser();
-  if (!user) throw new Error("UNAUTHORIZED");
-  return user.email;
+  return DEMO_USER.email;
 }

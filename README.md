@@ -4,8 +4,6 @@ Interaktivní demo dashboardu pro výpočet a správu provizí lékařů za dopo
 na placené služby kliniky. Slouží jako ukázka do případové studie — je to plná
 kopie produkčního rozhraní, ale bez napojení na CRM a databázi.
 
-**Demo přihlášení:** `spravce@demo.clinic` / `demo1234`
-
 ## Co je uvnitř
 
 | Sekce | Obsah |
@@ -27,6 +25,8 @@ nahrazena deterministicky generovaným datasetem v paměti serveru
 - všechna tlačítka, dialogy a filtry fungují a mění stav,
 - každá změna se zapisuje do historie změn stejně jako v produkci,
 - data jsou smyšlená — jména lékařů, zdroje i částky.
+
+Demo se otevírá rovnou na přehledu, bez přihlášení.
 
 Stav žije v paměti běžícího procesu, takže se po restartu (nebo studeném startu
 serverless funkce) vrátí do výchozí podoby.
