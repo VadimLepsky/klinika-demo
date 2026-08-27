@@ -18,7 +18,7 @@ import { formatCurrency, formatMonth } from "@/lib/format"
 import type { DoctorMonthPoint } from "@/lib/queries/doctor"
 
 const referralsConfig: ChartConfig = {
-  referrals: { label: "Doporučení", color: "var(--chart-1)" },
+  referrals: { label: "Počet doporučení", color: "var(--chart-1)" },
 }
 const commissionConfig: ChartConfig = {
   commission: { label: "Provize", color: "var(--chart-2)" },

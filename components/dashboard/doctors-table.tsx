@@ -33,12 +33,12 @@ export function DoctorsTable({ doctors, period }: { doctors: DoctorRow[]; period
         <CardDescription>Kliknutím na řádek otevřete kartu lékaře.</CardDescription>
       </CardHeader>
       <CardContent className="overflow-x-auto px-0">
-        <Table className="table-fixed w-full min-w-[860px]">
+        <Table className="table-fixed w-full min-w-[920px]">
           <TableHeader>
             <TableRow className="bg-secondary/60 hover:bg-secondary/60">
               <TableHead className="pl-6">Lékař</TableHead>
-              <TableHead className="w-[110px] text-right">Doporučení</TableHead>
-              <TableHead className="w-[160px] text-right">Objem, Kč</TableHead>
+              <TableHead className="w-[140px] text-right">Počet doporučení</TableHead>
+              <TableHead className="w-[190px] text-right">Objem doporučených, Kč</TableHead>
               <TableHead className="w-[130px] text-right">Provize, Kč</TableHead>
               <TableHead className="w-[140px] text-right">Ošetřeno pacientů</TableHead>
               <TableHead className="w-[130px] pr-6 text-right">Koeficient</TableHead>

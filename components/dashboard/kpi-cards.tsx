@@ -6,8 +6,8 @@ import type { DashboardKpis } from "@/lib/queries/dashboard"
 export function KpiCards({ kpis }: { kpis: DashboardKpis }) {
   const items = [
     { label: "Provize celkem", value: formatCurrency(kpis.totalCommission), icon: Coins },
-    { label: "Doporučení", value: formatNumber(kpis.totalReferrals), icon: Send },
-    { label: "Doporučený objem", value: formatCurrency(kpis.totalBase), icon: Wallet },
+    { label: "Počet doporučení", value: formatNumber(kpis.totalReferrals), icon: Send },
+    { label: "Objem doporučených", value: formatCurrency(kpis.totalBase), icon: Wallet },
     { label: "Lékařů s provizí", value: formatNumber(kpis.doctorsWithCommission), icon: Stethoscope },
   ]
 
