@@ -1,6 +1,6 @@
 "use client"
 
-import { Activity } from "lucide-react"
+import Image from "next/image"
 import Link from "next/link"
 import { usePathname, useSearchParams } from "next/navigation"
 import {
@@ -34,8 +34,14 @@ export function AppSidebar() {
     <Sidebar collapsible="none" className="h-svh sticky top-0 border-r border-sidebar-border">
       <SidebarHeader className="h-16 border-b border-sidebar-border">
         <div className="flex items-center gap-2.5 px-2 py-1.5">
-          <div className="flex size-9 items-center justify-center rounded-md bg-primary text-primary-foreground">
-            <Activity className="size-5" />
+          <div className="flex size-9 items-center justify-center rounded-md">
+            <Image
+              src="/logo-placeholder.png"
+              alt="demo.clinic"
+              width={36}
+              height={36}
+              className="rounded-md"
+            />
           </div>
           <div className="flex flex-col">
             <span className="text-sm font-semibold leading-tight">demo.clinic</span>

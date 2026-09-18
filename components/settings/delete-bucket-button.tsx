@@ -34,7 +34,7 @@ export function DeleteBucketButton({
     startTransition(async () => {
       const res = await deleteBucket(bucket)
       if (res.ok) {
-        toast.success(`Skupina «${label}» byla smazána.`)
+        toast.success(`Pravidlo «${label}» bylo smazáno.`)
         setOpen(false)
       } else {
         toast.error(res.error)
@@ -55,7 +55,7 @@ export function DeleteBucketButton({
             </span>
           }
         />
-        <TooltipContent>Skupina se používá — má kategorie nebo provize.</TooltipContent>
+        <TooltipContent>Pravidlo se používá — má kategorie nebo provize.</TooltipContent>
       </Tooltip>
     )
   }

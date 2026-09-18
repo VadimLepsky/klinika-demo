@@ -96,7 +96,7 @@ export function CategoryMappingTable({
           <TableHeader>
             <TableRow>
               <TableHead className="pl-4">Kategorie</TableHead>
-              <TableHead className="w-[240px]">Skupina</TableHead>
+              <TableHead className="w-[240px]">Pravidlo</TableHead>
               <TableHead className="w-[110px] text-right pr-4">Akce</TableHead>
             </TableRow>
           </TableHeader>

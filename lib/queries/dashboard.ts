@@ -1,6 +1,14 @@
 import "server-only"
 import { db } from "@/lib/demo/store"
+import { getDoctorDisplayNames } from "@/lib/doctor-name"
 import { periodKey } from "@/lib/format"
+import {
+  getReferralsByDoctor,
+  getReferralsByDoctorAndMonth,
+  getReferralsMonthlyTotals,
+  getReferralsTotal,
+} from "@/lib/queries/referrals"
+import { getReferredVolumeByDoctor, getReferredVolumeTotal } from "@/lib/queries/referred-volume"
 
 export type Period = {
   period: string
@@ -28,6 +36,7 @@ export type DashboardKpis = {
   totalReferrals: number
   totalBase: number
   doctorsWithCommission: number
+  totalPatientsServed: number
 }
 
 export async function getKpis(period: string): Promise<DashboardKpis> {
@@ -35,15 +44,19 @@ export async function getKpis(period: string): Promise<DashboardKpis> {
   const monthly = state.commissionMonthly.filter((m) => m.period === period)
 
   const totalCommission = monthly.reduce((s, m) => s + m.commission, 0)
-  const totalBase = monthly.reduce((s, m) => s + m.base, 0)
   const doctorsWithCommission = new Set(
     monthly.filter((m) => m.commission > 0).map((m) => m.master_id),
   ).size
-  const totalReferrals = state.doctorMonthlyStats
+  const totalPatientsServed = state.doctorMonthlyStats
     .filter((d) => d.period === period)
-    .reduce((s, d) => s + d.referrals, 0)
+    .reduce((s, d) => s + d.patients_served, 0)
 
-  return { totalCommission, totalBase, doctorsWithCommission, totalReferrals }
+  const [totalReferrals, totalBase] = await Promise.all([
+    getReferralsTotal(period),
+    getReferredVolumeTotal(period),
+  ])
+
+  return { totalCommission, totalBase, doctorsWithCommission, totalPatientsServed, totalReferrals }
 }
 
 export type DoctorRow = {
@@ -54,11 +67,19 @@ export type DoctorRow = {
   base: number
   commission: number
   patients_served: number
+  paid: boolean
+  paid_by: string | null
+  paid_at: string | null
 }
 
 export async function getDoctorsForMonth(period: string): Promise<DoctorRow[]> {
   const state = db()
   const rows = new Map<string, DoctorRow>()
+
+  const [referralsByDoctor, referredVolumeByDoctor] = await Promise.all([
+    getReferralsByDoctor(period),
+    getReferredVolumeByDoctor(period),
+  ])
 
   for (const m of state.commissionMonthly) {
     if (m.period !== period) continue
@@ -66,21 +87,31 @@ export async function getDoctorsForMonth(period: string): Promise<DoctorRow[]> {
     const stats = state.doctorMonthlyStats.find(
       (d) => d.master_id === m.master_id && d.period === period,
     )
+    const payout = state.doctorPayouts.find(
+      (p) => p.master_id === m.master_id && p.period === period,
+    )
     const found = rows.get(m.master_id)
     if (found) {
-      found.base += m.base
       found.commission += m.commission
     } else {
       rows.set(m.master_id, {
         master_id: m.master_id,
-        full_name: staff?.full_name ?? `Neznámý lékař #${m.master_id}`,
+        full_name: m.master_id,
         is_doctor: staff?.is_doctor ?? null,
-        referrals: stats?.referrals ?? 0,
+        referrals: referralsByDoctor.get(m.master_id) ?? 0,
+        base: referredVolumeByDoctor.get(m.master_id) ?? 0,
         patients_served: stats?.patients_served ?? 0,
-        base: m.base,
         commission: m.commission,
+        paid: payout != null,
+        paid_by: payout?.paid_by ?? null,
+        paid_at: payout?.paid_at ?? null,
       })
     }
+  }
+
+  const displayNames = await getDoctorDisplayNames([...rows.keys()])
+  for (const [masterId, row] of rows) {
+    row.full_name = displayNames.get(masterId) ?? `#${masterId}`
   }
 
   return [...rows.values()].sort((a, b) => b.commission - a.commission)
@@ -94,14 +125,13 @@ export type MonthlySeriesPoint = {
 
 export async function getMonthlySeries(): Promise<MonthlySeriesPoint[]> {
   const state = db()
+  const referralsByPeriod = await getReferralsMonthlyTotals()
   return state.periods
     .slice()
     .sort((a, b) => (a.period < b.period ? -1 : 1))
     .map((p) => ({
       period: periodKey(p.period),
-      referrals: state.doctorMonthlyStats
-        .filter((d) => d.period === p.period)
-        .reduce((s, d) => s + d.referrals, 0),
+      referrals: referralsByPeriod.get(periodKey(p.period)) ?? 0,
       commission: state.commissionMonthly
         .filter((m) => m.period === p.period)
         .reduce((s, m) => s + m.commission, 0),
@@ -117,22 +147,20 @@ export type DoctorReferralSeries = {
 /** Per-doctor referrals across all months, for the overlay multiselect. */
 export async function getDoctorReferralSeries(): Promise<DoctorReferralSeries[]> {
   const state = db()
+  const referralsByDoctor = await getReferralsByDoctorAndMonth()
+
   const map = new Map<string, DoctorReferralSeries>()
-
-  for (const d of [...state.doctorMonthlyStats].sort((a, b) =>
-    a.master_id === b.master_id ? (a.period < b.period ? -1 : 1) : a.master_id < b.master_id ? -1 : 1,
-  )) {
-    const staff = state.staff.find((s) => s.master_id === d.master_id)
-    if (!map.has(d.master_id)) {
-      map.set(d.master_id, {
-        master_id: d.master_id,
-        full_name: staff?.full_name ?? `Neznámý lékař #${d.master_id}`,
-        points: [],
-      })
-    }
-    map.get(d.master_id)!.points.push({ period: periodKey(d.period), referrals: d.referrals })
+  for (const [masterId, byPeriod] of referralsByDoctor) {
+    const staff = state.staff.find((s) => s.master_id === masterId)
+    const points = [...byPeriod.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([period, referrals]) => ({ period, referrals }))
+    map.set(masterId, {
+      master_id: masterId,
+      full_name: staff?.full_name ?? `Neznámý lékař #${masterId}`,
+      points,
+    })
   }
-
   // sort by total referrals desc so the most active doctors are first in the picker
   return [...map.values()].sort(
     (a, b) =>

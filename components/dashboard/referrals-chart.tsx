@@ -17,10 +17,11 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart"
 import { formatMonth } from "@/lib/format"
+import { SERIES_COLORS } from "@/lib/category-colors"
 import type { MonthlySeriesPoint } from "@/lib/queries/dashboard"
 
 const chartConfig: ChartConfig = {
-  clinic: { label: "Klinika celkem", color: "var(--chart-1)" },
+  clinic: { label: "Klinika celkem", color: SERIES_COLORS.referrals },
 }
 
 export function ReferralsChart({ series }: { series: MonthlySeriesPoint[] }) {

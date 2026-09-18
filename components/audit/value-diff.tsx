@@ -2,11 +2,12 @@ const FIELD_LABEL: Record<string, string> = {
   status: "stav",
   label: "název",
   name: "název",
+  full_name: "jméno",
   beneficiary: "příjemce",
   category_id: "kategorie",
   service_id: "služba",
   rate: "sazba",
-  bucket: "skupina",
+  bucket: "pravidlo",
   is_doctor: "lékař",
   note: "poznámka",
   master_id: "lékař (id)",
@@ -15,6 +16,8 @@ const FIELD_LABEL: Record<string, string> = {
   total_commission: "provize",
   frozen_by: "uzavřel",
   reason: "důvod",
+  role: "role",
+  period: "období",
 }
 
 const VALUE_LABEL: Record<string, string> = {
@@ -23,6 +26,8 @@ const VALUE_LABEL: Record<string, string> = {
   unmapped: "nepřiřazeno",
   frozen: "uzavřeno",
   draft: "rozpracováno",
+  admin: "administrátor",
+  viewer: "prohlížení",
   true: "ano",
   false: "ne",
 }

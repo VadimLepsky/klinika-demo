@@ -1,6 +1,6 @@
 import { ArrowRight, History } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { EntityFilter } from "@/components/audit/entity-filter"
 import { ValueDiff } from "@/components/audit/value-diff"
@@ -23,12 +23,17 @@ const ACTION_LABEL: Record<string, string> = {
   "period.freeze": "Měsíc uzavřen",
   "service_exclusion.create": "Přidána výjimka",
   "service_exclusion.end": "Ukončena výjimka",
-  "bucket.create": "Vytvořena skupina",
-  "bucket.update": "Změněna skupina",
-  "bucket.delete": "Smazána skupina",
+  "bucket.create": "Vytvořeno pravidlo",
+  "bucket.update": "Změněno pravidlo",
+  "bucket.delete": "Smazáno pravidlo",
   "unmatched.add_service": "Přidána služba",
   "unmatched.ignore": "Položka ignorována",
   "unmatched.unignore": "Položka vrácena",
+  "user.invite": "Pozván uživatel",
+  "user.delete": "Smazán uživatel",
+  "user.role_change": "Změna role",
+  "payout.mark": "Vyplaceno",
+  "payout.unmark": "Zrušena výplata",
 }
 
 export default async function AuditPage({
@@ -47,9 +52,6 @@ export default async function AuditPage({
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">Historie změn</h1>
-          <p className="text-sm text-muted-foreground">
-            Každá změna pravidel je trvale zaznamenána — kdo, kdy a co změnil.
-          </p>
         </div>
         <EntityFilter entities={entities} current={entity ?? ""} />
       </header>
@@ -60,11 +62,6 @@ export default async function AuditPage({
             <History className="size-4 text-muted-foreground" />
             Poslední změny
           </CardTitle>
-          <CardDescription>
-            {entries.length > 0
-              ? `Zobrazeno ${entries.length} záznamů${entity ? ` — ${entityLabel(entity)}` : ""}.`
-              : "Žádné záznamy."}
-          </CardDescription>
         </CardHeader>
         <CardContent className="overflow-x-auto px-0 pb-0">
           <Table className="table-fixed w-full min-w-[900px]">

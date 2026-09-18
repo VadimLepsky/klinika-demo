@@ -13,7 +13,8 @@ import { AddServiceDialog } from "@/components/attention/add-service-dialog"
 import { IgnoreLineButton } from "@/components/attention/ignore-line-button"
 import { unignoreUnmatchedLine } from "@/app/(app)/attention/actions"
 import { formatCurrency, formatDateTime, formatMonth } from "@/lib/format"
-import type { BucketOption, ExistingCategory, IgnoredUnmatchedLine, UnmatchedLineGroup } from "@/lib/queries/attention"
+import type { BucketOption, ExistingCategory, IgnoredUnmatchedLine } from "@/lib/queries/attention"
+import type { UnresolvedUnmatchedLine } from "@/lib/queries/unresolved"
 
 function UnignoreButton({ itemId, itemName }: { itemId: string; itemName: string }) {
   const [pending, startTransition] = useTransition()
@@ -38,7 +39,7 @@ export function UnmatchedLinesCard({
   buckets,
   categories,
 }: {
-  lines: UnmatchedLineGroup[]
+  lines: UnresolvedUnmatchedLine[]
   ignored: IgnoredUnmatchedLine[]
   buckets: BucketOption[]
   categories: ExistingCategory[]

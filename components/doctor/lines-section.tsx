@@ -41,6 +41,7 @@ export function LinesSection({ lines }: { lines: DoctorLine[] }) {
                   <Table className="table-fixed w-full min-w-[640px]">
                     <TableHeader className="sticky top-0 bg-card">
                       <TableRow>
+                        <TableHead className="w-[90px] text-right">Č. návštěvy</TableHead>
                         <TableHead>Služba</TableHead>
                         <TableHead className="w-[110px] text-right">Základ, Kč</TableHead>
                         <TableHead className="w-[90px] text-right">Sazba</TableHead>
@@ -51,6 +52,9 @@ export function LinesSection({ lines }: { lines: DoctorLine[] }) {
                     <TableBody>
                       {lines.map((line) => (
                         <TableRow key={line.id}>
+                          <TableCell className="whitespace-nowrap text-right text-muted-foreground tabular-nums">
+                            {line.visit_id ?? "—"}
+                          </TableCell>
                           <TableCell
                             className="max-w-0 truncate font-medium"
                             title={line.item_name}

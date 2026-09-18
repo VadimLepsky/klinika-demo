@@ -8,7 +8,6 @@ type ActionResult = { ok: true } | { ok: false; error: string }
 
 function revalidateBucketPaths() {
   revalidatePath("/settings/buckets")
-  revalidatePath("/settings/rates")
   revalidatePath("/settings/mapping")
   revalidatePath("/attention")
 }
@@ -27,7 +26,7 @@ export async function createBucket(
   const cleanLabel = label.trim()
   const cleanKey = key.trim().toLowerCase()
 
-  if (cleanLabel.length < 2) return { ok: false, error: "Zadejte název skupiny." }
+  if (cleanLabel.length < 2) return { ok: false, error: "Zadejte název pravidla." }
   if (!/^[a-z][a-z0-9_]{1,39}$/.test(cleanKey)) {
     return { ok: false, error: "Klíč: pouze malá písmena bez diakritiky, číslice a podtržítka, od 2 znaků." }
   }
@@ -84,11 +83,11 @@ export async function createBucket(
 /** Renames a bucket's label. Key and beneficiary are immutable here. */
 export async function updateBucketLabel(bucket: string, label: string): Promise<ActionResult> {
   const cleanLabel = label.trim()
-  if (cleanLabel.length < 2) return { ok: false, error: "Zadejte název skupiny." }
+  if (cleanLabel.length < 2) return { ok: false, error: "Zadejte název pravidla." }
   try {
     const state = db()
     const row = state.buckets.find((b) => b.bucket === bucket)
-    if (!row) return { ok: false, error: "Skupina nebyla nalezena." }
+    if (!row) return { ok: false, error: "Pravidlo nebylo nalezeno." }
 
     const old = row.label
     row.label = cleanLabel
@@ -112,14 +111,14 @@ export async function deleteBucket(bucket: string): Promise<ActionResult> {
   try {
     const state = db()
     const old = state.buckets.find((b) => b.bucket === bucket)
-    if (!old) return { ok: false, error: "Skupina nebyla nalezena." }
+    if (!old) return { ok: false, error: "Pravidlo nebylo nalezeno." }
 
     const catCount = state.categoryMapping.filter((cm) => cm.bucket === bucket).length
     const monthlyCount = state.commissionMonthly.filter((m) => m.bucket === bucket).length
     const svcCount = state.serviceMapping.filter((sm) => sm.bucket === bucket).length
 
     if (catCount > 0 || monthlyCount > 0 || svcCount > 0) {
-      return { ok: false, error: "Skupina se používá a nelze ji smazat." }
+      return { ok: false, error: "Pravidlo se používá a nelze ho smazat." }
     }
 
     state.bucketRates = state.bucketRates.filter((r) => r.bucket !== bucket)
@@ -174,7 +173,7 @@ export async function updateRate(
       oldValue: oldRate != null ? { rate: oldRate } : null,
       newValue: { rate, valid_from: validFrom },
     })
-    revalidatePath("/settings/rates")
+    revalidatePath("/settings/buckets")
     return { ok: true }
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Chyba" }

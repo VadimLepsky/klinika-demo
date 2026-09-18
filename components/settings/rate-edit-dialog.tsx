@@ -58,7 +58,7 @@ export function RateEditDialog({
         render={
           <Button variant="outline" size="sm">
             <Pencil data-icon="inline-start" />
-            Změnit
+            Změnit sazbu
           </Button>
         }
       />

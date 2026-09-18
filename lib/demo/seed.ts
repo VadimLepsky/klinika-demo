@@ -3,6 +3,7 @@
 // rules tables — only the storage is a plain object instead of Postgres.
 
 import type {
+  AppUserRec,
   AuditRec,
   BucketRateRec,
   BucketRec,
@@ -11,6 +12,8 @@ import type {
   CommissionMonthlyRec,
   DemoState,
   DoctorMonthlyStatsRec,
+  DoctorPayoutRec,
+  ReferralVisitRec,
   ServiceCatalogRec,
   ServiceExclusionRec,
   ServiceMappingRec,
@@ -442,6 +445,7 @@ export function buildDemoState(): DemoState {
 
   const commissionLines: CommissionLineRec[] = []
   const doctorMonthlyStats: DoctorMonthlyStatsRec[] = []
+  const referralVisits: ReferralVisitRec[] = []
   let visitSeq = 40000
 
   // A doctor's referral volume is a stable trait, not re-rolled every month —
@@ -454,12 +458,12 @@ export function buildDemoState(): DemoState {
 
     DOCTORS.forEach(([masterId], doctorIndex) => {
       const sourceId = String(1000 + doctorIndex)
+      // Each accrued line below stands for one completed, paid visit referred
+      // to this doctor by another performer — i.e. one referral ("doporučení").
       const lineCount = Math.max(
         3,
         Math.round(baseVolume[doctorIndex] * growth * (0.85 + rand() * 0.3)),
       )
-
-      let referrals = 0
 
       for (let i = 0; i < lineCount; i++) {
         const [serviceId, name, categoryId, price] = COMMISSIONABLE[Math.floor(rand() * COMMISSIONABLE.length)]
@@ -483,7 +487,7 @@ export function buildDemoState(): DemoState {
           status: "accrued",
           reason: null,
         })
-        referrals += qty
+        referralVisits.push({ period, master_id: masterId })
       }
 
       // A few deliberately non-commission lines, so the doctor card shows the
@@ -511,11 +515,10 @@ export function buildDemoState(): DemoState {
       }
 
       // Coefficient = referrals ÷ patients served; occasionally above 100%.
-      const patients = Math.max(1, Math.round(referrals * (0.7 + rand() * 0.75)))
+      const patients = Math.max(1, Math.round(lineCount * (0.7 + rand() * 0.75)))
       doctorMonthlyStats.push({
         period,
         master_id: masterId,
-        referrals,
         patients_served: patients,
       })
     })
@@ -652,6 +655,54 @@ export function buildDemoState(): DemoState {
     }
   })
 
+  /* ------------------------------- payouts -------------------------------- */
+
+  // Most doctors have already been paid out for the frozen months; the two
+  // open (draft) months are left untouched so the checkbox has something to
+  // demonstrate live. "Vyplaceno" is independent of the freeze itself.
+  const doctorPayouts: DoctorPayoutRec[] = []
+  for (const period of PERIODS) {
+    if (period > FROZEN_THROUGH) continue
+    const paidAt = `${nextMonthOf(period)}T13:00:00.000Z`
+    for (const [masterId] of DOCTORS) {
+      const hasCommission = commissionMonthly.some(
+        (m) => m.period === period && m.master_id === masterId && m.commission > 0,
+      )
+      if (hasCommission && rand() < 0.75) {
+        doctorPayouts.push({ period, master_id: masterId, paid_by: "hlavni.ucetni@demo.clinic", paid_at: paidAt })
+      }
+    }
+  }
+
+  /* -------------------------------- users --------------------------------- */
+
+  const users: AppUserRec[] = [
+    {
+      id: "1",
+      email: "spravce@demo.clinic",
+      full_name: "Petr Zeman",
+      role: "admin",
+      created_at: "2025-10-20T08:00:00.000Z",
+      invited_by: null,
+    },
+    {
+      id: "2",
+      email: "hlavni.ucetni@demo.clinic",
+      full_name: "Jana Dostálová",
+      role: "admin",
+      created_at: "2025-10-21T09:15:00.000Z",
+      invited_by: "1",
+    },
+    {
+      id: "3",
+      email: "hlavni.lekar@demo.clinic",
+      full_name: "MUDr. Filip Krejčí",
+      role: "viewer",
+      created_at: "2025-10-22T10:30:00.000Z",
+      invited_by: "1",
+    },
+  ]
+
   const state: DemoState = {
     periods,
     staff,
@@ -665,12 +716,15 @@ export function buildDemoState(): DemoState {
     commissionLines,
     commissionMonthly,
     doctorMonthlyStats,
+    referralVisits,
+    doctorPayouts,
     unmatchedIgnored: IGNORED_ITEMS.map(([itemId, , reason, at]) => ({
       item_id: itemId,
       reason,
       user_email: "spravce@demo.clinic",
       at,
     })),
+    users,
     auditLog: [],
     nextAuditId: 1,
     nextRowId: rowId,
@@ -731,6 +785,8 @@ function buildAuditLog(state: DemoState): AuditRec[] {
     new_value: unknown,
   ) => entries.push({ at, user_email, action, entity, entity_id, old_value, new_value })
 
+  push("2025-10-21T09:16:00.000Z", "spravce@demo.clinic", "user.invite", "users", "hlavni.ucetni@demo.clinic", null, { full_name: "Jana Dostálová", role: "admin" })
+  push("2025-10-22T10:31:00.000Z", "spravce@demo.clinic", "user.invite", "users", "hlavni.lekar@demo.clinic", null, { full_name: "MUDr. Filip Krejčí", role: "viewer" })
   push("2025-11-03T09:20:00.000Z", "spravce@demo.clinic", "bucket.create", "commission_buckets", "medlab", null, { label: "Laboratoř MEDLAB", beneficiary: "source", rate: 0.05, valid_from: "2025-11-01" })
   push("2025-11-03T09:24:00.000Z", "spravce@demo.clinic", "bucket.create", "commission_buckets", "uzd", null, { label: "Ultrazvuk", beneficiary: "source", rate: 0.08, valid_from: "2025-11-01" })
   push("2025-11-05T11:02:00.000Z", "spravce@demo.clinic", "category.map", "category_mapping", "835", null, { bucket: "medlab", valid_from: "2025-11-01" })
@@ -754,8 +810,11 @@ function buildAuditLog(state: DemoState): AuditRec[] {
   push("2026-04-22T12:36:00.000Z", "hlavni.lekar@demo.clinic", "staff.update", "staff", "114", { is_doctor: null, note: null }, { is_doctor: true, note: "tricholožka" })
   push("2026-04-29T14:18:00.000Z", "spravce@demo.clinic", "rate.update", "bucket_rates", "uzd", { rate: 0.08 }, { rate: 0.1, valid_from: "2026-05-01" })
   push("2026-05-05T08:12:00.000Z", "hlavni.ucetni@demo.clinic", "period.freeze", "periods", "2026-04-01", { status: "draft" }, { status: "frozen", frozen_by: "hlavni.ucetni@demo.clinic" })
+  push("2026-05-06T13:05:00.000Z", "hlavni.ucetni@demo.clinic", "payout.mark", "doctor_payouts", "2026-04-01:101", null, { full_name: "MUDr. Jan Novák", period: "2026-04-01" })
   push("2026-06-08T09:14:00.000Z", "spravce@demo.clinic", "unmatched.ignore", "unmatched_ignored", "9010", null, { reason: "testovací položka v CRM" })
   push("2026-06-15T11:47:00.000Z", "hlavni.lekar@demo.clinic", "source.map", "sources", "1012", { status: "unmapped", master_id: null }, { status: "doctor", master_id: "113" })
+  push("2026-06-20T15:32:00.000Z", "spravce@demo.clinic", "user.role_change", "users", "hlavni.lekar@demo.clinic", { role: "viewer" }, { role: "admin" })
+  push("2026-06-20T15:41:00.000Z", "spravce@demo.clinic", "user.role_change", "users", "hlavni.lekar@demo.clinic", { role: "admin" }, { role: "viewer" })
 
   void state
   return entries

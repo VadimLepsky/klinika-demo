@@ -12,6 +12,20 @@ export const metadata: Metadata = {
   title: 'demo.clinic — Provize',
   description: 'Interní analytika a správa provizí lékařů',
   generator: 'v0.app',
+  icons: {
+    icon: [
+      {
+        url: '/icon-light-32x32.png',
+        media: '(prefers-color-scheme: light)',
+        type: 'image/png',
+      },
+      {
+        url: '/icon-dark-32x32.png',
+        media: '(prefers-color-scheme: dark)',
+        type: 'image/png',
+      },
+    ],
+  },
 }
 
 export const viewport: Viewport = {

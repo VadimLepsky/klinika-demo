@@ -182,7 +182,7 @@ export async function addUnmatchedService(
       })
     } else {
       if (!state.buckets.some((b) => b.bucket === target.bucket)) {
-        return { ok: false, error: "Skupina nebyla nalezena." }
+        return { ok: false, error: "Pravidlo nebylo nalezeno." }
       }
 
       state.servicesCatalog.push({

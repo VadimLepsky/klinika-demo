@@ -67,7 +67,7 @@ export function AddServiceDialog({
       })
     } else {
       if (!bucket) {
-        toast.error("Zvolte skupinu.")
+        toast.error("Zvolte pravidlo.")
         return
       }
       startTransition(async () => {
@@ -110,12 +110,12 @@ export function AddServiceDialog({
                 Kategorie
               </TabsTrigger>
               <TabsTrigger value="bucket" className="flex-1">
-                Přímo skupina
+                Pravidlo přímo
               </TabsTrigger>
             </TabsList>
             <TabsContent value="category" className="pt-3">
               <div className="flex flex-col gap-2">
-                <Label>Kategorie (převezme její skupinu)</Label>
+                <Label>Kategorie (zdědí její pravidlo)</Label>
                 <Select value={categoryId} onValueChange={setCategoryId} disabled={pending} items={categoryItems}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Zvolte kategorii" />
@@ -134,13 +134,13 @@ export function AddServiceDialog({
             </TabsContent>
             <TabsContent value="bucket" className="pt-3">
               <div className="flex flex-col gap-2">
-                <Label>Skupina (výjimka jen pro tuto službu)</Label>
+                <Label>Pravidlo (výjimka jen pro tuto službu)</Label>
                 <BucketSelect
                   buckets={buckets}
                   value={bucket}
                   onValueChange={setBucket}
                   disabled={pending}
-                  placeholder="Zvolte skupinu"
+                  placeholder="Zvolte pravidlo"
                 />
               </div>
             </TabsContent>

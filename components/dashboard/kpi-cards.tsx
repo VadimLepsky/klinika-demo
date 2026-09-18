@@ -1,12 +1,17 @@
 import { Coins, Send, Stethoscope, Wallet } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { formatCurrency, formatNumber } from "@/lib/format"
+import { formatCoefficient, formatCurrency, formatNumber } from "@/lib/format"
 import type { DashboardKpis } from "@/lib/queries/dashboard"
 
 export function KpiCards({ kpis }: { kpis: DashboardKpis }) {
   const items = [
     { label: "Provize celkem", value: formatCurrency(kpis.totalCommission), icon: Coins },
-    { label: "Počet doporučení", value: formatNumber(kpis.totalReferrals), icon: Send },
+    {
+      label: "Počet doporučení",
+      value: formatNumber(kpis.totalReferrals),
+      icon: Send,
+      secondary: `koeficient ${formatCoefficient(kpis.totalReferrals, kpis.totalPatientsServed)}`,
+    },
     { label: "Objem doporučených", value: formatCurrency(kpis.totalBase), icon: Wallet },
     { label: "Lékařů s provizí", value: formatNumber(kpis.doctorsWithCommission), icon: Stethoscope },
   ]
@@ -25,6 +30,9 @@ export function KpiCards({ kpis }: { kpis: DashboardKpis }) {
             <div className="text-2xl font-semibold tracking-tight tabular-nums text-foreground">
               {item.value}
             </div>
+            {item.secondary ? (
+              <div className="mt-1 text-xs text-muted-foreground tabular-nums">{item.secondary}</div>
+            ) : null}
           </CardContent>
         </Card>
       ))}

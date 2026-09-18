@@ -14,10 +14,11 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart"
 import { formatCurrency, formatMonth } from "@/lib/format"
+import { SERIES_COLORS } from "@/lib/category-colors"
 import type { MonthlySeriesPoint } from "@/lib/queries/dashboard"
 
 const chartConfig: ChartConfig = {
-  commission: { label: "Provize", color: "var(--chart-1)" },
+  commission: { label: "Provize", color: SERIES_COLORS.commission },
 }
 
 export function CommissionBarChart({ series }: { series: MonthlySeriesPoint[] }) {

@@ -12,12 +12,12 @@ import {
   getUnmappedSources,
   getUnflaggedStaff,
   getNewCategories,
-  getUnmatchedLines,
   getIgnoredUnmatchedLines,
   getExistingCategories,
   getDoctorOptions,
   getBucketOptions,
 } from "@/lib/queries/attention"
+import { getUnresolvedUnmatchedLines } from "@/lib/queries/unresolved"
 
 export const metadata = {
   title: "Vyžaduje pozornost",
@@ -87,7 +87,7 @@ export default async function AttentionPage({
     getUnmappedSources(),
     getUnflaggedStaff(),
     getNewCategories(selected ?? undefined),
-    getUnmatchedLines(selected ?? undefined),
+    getUnresolvedUnmatchedLines(selected ?? undefined),
     getIgnoredUnmatchedLines(),
     getExistingCategories(),
     getDoctorOptions(),
@@ -144,13 +144,13 @@ export default async function AttentionPage({
         id="categories"
         icon={Tags}
         title="Nové kategorie bez sazby"
-        description="Kategorie služeb, které se objevily bez pravidla pro přiřazení do skupiny."
+        description="Kategorie služeb, kterým nebylo přiřazeno pravidlo pro výpočet provize."
         count={categories.length}
       >
         {categories.length > 0 ? (
           categories.map((c) => <CategoryItem key={c.category_id} category={c} buckets={buckets} />)
         ) : (
-          <ResolvedEmpty label="Všechny kategorie jsou přiřazené ke skupinám." />
+          <ResolvedEmpty label="Všechny kategorie jsou přiřazené k pravidlům." />
         )}
       </SectionCard>
 

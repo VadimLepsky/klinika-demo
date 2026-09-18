@@ -12,7 +12,7 @@ import {
 import { getBucketOptions } from "@/lib/queries/attention"
 import { formatDate } from "@/lib/format"
 
-export const metadata = { title: "Kategorie a služby" }
+export const metadata = { title: "Kategorie z CRM" }
 
 export const dynamic = "force-dynamic"
 
@@ -31,7 +31,7 @@ export default async function MappingPage() {
           <TabsList>
             <TabsTrigger value="categories">Kategorie</TabsTrigger>
             <TabsTrigger value="exclusions">Výjimky služeb</TabsTrigger>
-            <TabsTrigger value="services">Mapování podle služby</TabsTrigger>
+            <TabsTrigger value="services">Výjimky podle služby</TabsTrigger>
           </TabsList>
 
           <TabsContent value="categories" className="pt-4">
@@ -45,15 +45,14 @@ export default async function MappingPage() {
           <TabsContent value="services" className="pt-4">
             <div className="flex flex-col gap-4">
               <p className="text-sm text-muted-foreground">
-                Bodové výjimky na úrovni služby (přebíjejí pravidlo kategorie). Převážně
-                jen pro čtení.
+                Výjimky pro jednotlivé služby — přebíjejí pravidlo jejich kategorie.
               </p>
               <div className="overflow-x-auto rounded-lg border border-border">
                 <Table className="table-fixed w-full min-w-[600px]">
                   <TableHeader>
                     <TableRow>
                       <TableHead className="pl-4">Služba</TableHead>
-                      <TableHead className="w-[180px]">Skupina</TableHead>
+                      <TableHead className="w-[180px]">Pravidlo</TableHead>
                       <TableHead className="w-[120px]">Platí od</TableHead>
                       <TableHead className="w-[120px]">Platí do</TableHead>
                     </TableRow>

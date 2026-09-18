@@ -8,11 +8,11 @@ kopie produkčního rozhraní, ale bez napojení na CRM a databázi.
 
 | Sekce | Obsah |
 | --- | --- |
-| **Přehled** | KPI za měsíc, vývoj doporučení a provizí, tabulka lékařů s koeficientem |
-| **Karta lékaře** | Grafy po měsících, rozpad provizí podle skupin, jednotlivé položky se stavem |
-| **Vyžaduje pozornost** | Nepřiřazené zdroje doporučení (s návrhem lékaře), zaměstnanci bez označení, nové kategorie bez sazby, nerozpoznané položky účtenek |
+| **Přehled** | KPI za měsíc (vč. koeficientu doporučení), vývoj doporučení a provizí, tabulka lékařů s výplatní checkboxem a koeficientem |
+| **Karta lékaře** | Grafy po měsících (doporučení, provize, pacienti a koeficient), koláčový rozpad provizí podle kategorií, jednotlivé položky s číslem návštěvy, checkbox „Vyplaceno“ |
+| **Vyžaduje pozornost** | Nepřiřazené zdroje doporučení (s návrhem lékaře), zaměstnanci bez označení, nové kategorie bez pravidla, nerozpoznané položky účtenek |
 | **Období** | Uzávěrka měsíců — uzavřít lze jen měsíc bez nevyřešených položek |
-| **Nastavení** | Skupiny provizí, verzované sazby s historií, mapování kategorií a služeb, výjimky, zdroje, zaměstnanci |
+| **Nastavení** | Pravidla provizí s verzovanými sazbami a historií, kategorie z CRM, výjimky, zdroje, zaměstnanci, uživatelé (role, pozvánky) |
 | **Historie změn** | Auditní log každé změny pravidel — kdo, kdy, z čeho na co |
 
 ## Jak demo funguje

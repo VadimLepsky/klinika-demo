@@ -1,5 +1,6 @@
 import "server-only"
 import { db } from "@/lib/demo/store"
+import { getDoctorDisplayNames } from "@/lib/doctor-name"
 import { periodKey } from "@/lib/format"
 
 export type StaffOption = {
@@ -7,12 +8,23 @@ export type StaffOption = {
   full_name: string
 }
 
-/** Doctors available to link sources to (is_doctor = true). */
-export async function getDoctorOptions(): Promise<StaffOption[]> {
+/** Raw staff rows for doctors (is_doctor = true) — full_name here is staff.full_name, used only
+ *  as fuzzy-match input in getUnmappedSources. Never render this full_name directly. */
+async function getDoctorStaffRows(): Promise<StaffOption[]> {
   return db()
     .staff.filter((s) => s.is_doctor === true)
     .sort((a, b) => a.full_name.localeCompare(b.full_name, "cs"))
     .map((s) => ({ master_id: s.master_id, full_name: s.full_name }))
+}
+
+/** Doctors available to link sources to (is_doctor = true), with display-ready names. */
+export async function getDoctorOptions(): Promise<StaffOption[]> {
+  const staffRows = await getDoctorStaffRows()
+  const displayNames = await getDoctorDisplayNames(staffRows.map((r) => r.master_id))
+  return staffRows.map((r) => ({
+    master_id: r.master_id,
+    full_name: displayNames.get(r.master_id) ?? r.full_name,
+  }))
 }
 
 export type UnmappedSource = {
@@ -46,23 +58,29 @@ export async function getUnmappedSources(): Promise<UnmappedSource[]> {
     .sources.filter((s) => s.status === "unmapped")
     .sort((a, b) => a.label.localeCompare(b.label, "cs"))
 
-  const doctors = await getDoctorOptions()
+  // Matching runs against raw staff.full_name (unchanged calculation); the display
+  // name is only swapped in afterwards, for the "Podobá se: …" hint shown to the user.
+  const staffRows = await getDoctorStaffRows()
+  const displayNames = await getDoctorDisplayNames(staffRows.map((d) => d.master_id))
 
   return rows.map((r) => {
     let best: StaffOption | null = null
     let bestScore = 0.34 // require a minimum overlap to suggest anything
-    for (const d of doctors) {
+    for (const d of staffRows) {
       const score = similarity(r.label, d.full_name)
       if (score > bestScore) {
         bestScore = score
         best = d
       }
     }
+    const suggestion = best
+      ? { master_id: best.master_id, full_name: displayNames.get(best.master_id) ?? best.full_name }
+      : null
     return {
       source_id: r.source_id,
       label: r.label,
       note: r.note ?? null,
-      suggestion: best,
+      suggestion,
     }
   })
 }
@@ -134,54 +152,6 @@ export async function getBucketOptions(): Promise<BucketOption[]> {
     .buckets.slice()
     .sort((a, b) => (a.sort_order ?? 1e9) - (b.sort_order ?? 1e9) || a.bucket.localeCompare(b.bucket))
     .map((b) => ({ bucket: b.bucket, label: b.label }))
-}
-
-export type UnmatchedLineGroup = {
-  period: string
-  item_id: string
-  item_name: string
-  line_count: number
-  total_amount: number
-  reason: string | null
-}
-
-/**
- * Unresolved check lines grouped by (period, item_id) so the same missing
- * service isn't repeated once per check. Excludes items that already exist
- * in services_catalog (resolved) or have been explicitly ignored.
- *
- * Pass a period to scope to that month; omit to see unmatched lines across all periods.
- */
-export async function getUnmatchedLines(period?: string): Promise<UnmatchedLineGroup[]> {
-  const state = db()
-  const groups = new Map<string, UnmatchedLineGroup>()
-
-  for (const l of state.commissionLines) {
-    if (l.status !== "unmatched" || l.item_id == null) continue
-    if (period && l.period !== period) continue
-    if (state.servicesCatalog.some((sc) => sc.service_id === l.item_id)) continue
-    if (state.unmatchedIgnored.some((ui) => ui.item_id === l.item_id)) continue
-
-    const key = `${l.period}|${l.item_id}`
-    const found = groups.get(key)
-    if (found) {
-      found.line_count += 1
-      found.total_amount += l.base_amount
-    } else {
-      groups.set(key, {
-        period: periodKey(l.period),
-        item_id: l.item_id,
-        item_name: l.item_name ?? "—",
-        line_count: 1,
-        total_amount: l.base_amount,
-        reason: l.reason ?? null,
-      })
-    }
-  }
-
-  return [...groups.values()]
-    .sort((a, b) => (a.period === b.period ? b.line_count - a.line_count : a.period < b.period ? 1 : -1))
-    .slice(0, 500)
 }
 
 export type IgnoredUnmatchedLine = {

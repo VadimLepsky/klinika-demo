@@ -13,6 +13,7 @@ import {
   getMonthlySeries,
   getPeriods,
 } from "@/lib/queries/dashboard"
+import { getSessionUser } from "@/lib/session"
 
 export const dynamic = "force-dynamic"
 
@@ -42,11 +43,12 @@ export default async function DashboardPage({
 
   const selected = periods.find((p) => p.period === periodParam)?.period ?? periods[0].period
 
-  const [kpis, doctors, monthlySeries, attentionCount] = await Promise.all([
+  const [kpis, doctors, monthlySeries, attentionCount, sessionUser] = await Promise.all([
     getKpis(selected),
     getDoctorsForMonth(selected),
     getMonthlySeries(),
     getAttentionCount(selected),
+    getSessionUser(),
   ])
 
   return (
@@ -72,7 +74,7 @@ export default async function DashboardPage({
         </div>
       </div>
 
-      <DoctorsTable doctors={doctors} period={selected} />
+      <DoctorsTable doctors={doctors} period={selected} actorEmail={sessionUser?.email ?? ""} />
     </div>
   )
 }

@@ -27,7 +27,7 @@ export function CategoryItem({
 
   const apply = () => {
     if (!selected) {
-      toast.error("Zvolte skupinu nebo «Bez provize».")
+      toast.error("Zvolte pravidlo nebo «Bez provize».")
       return
     }
     const bucket = selected === NON_COMMISSION ? null : selected
@@ -53,7 +53,7 @@ export function CategoryItem({
           value={selected}
           onValueChange={setSelected}
           disabled={pending}
-          placeholder="Zvolte skupinu"
+          placeholder="Zvolte pravidlo"
           className="sm:w-[260px]"
           extraOptions={[{ value: NON_COMMISSION, label: "Bez provize" }]}
         />

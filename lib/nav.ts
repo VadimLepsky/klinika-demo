@@ -4,9 +4,9 @@ import {
   History,
   Layers,
   Lock,
-  Package,
   Percent,
   TriangleAlert,
+  UserCog,
   Users,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
@@ -33,11 +33,11 @@ export const navSections: NavSection[] = [
   {
     label: "Nastavení",
     items: [
-      { href: "/settings/buckets", label: "Skupiny provizí", icon: Package },
-      { href: "/settings/rates", label: "Sazby", icon: Percent },
-      { href: "/settings/mapping", label: "Kategorie a služby", icon: Layers },
+      { href: "/settings/buckets", label: "Pravidla provizí", icon: Percent },
+      { href: "/settings/mapping", label: "Kategorie z CRM", icon: Layers },
       { href: "/settings/sources", label: "Zdroje", icon: ClipboardList },
       { href: "/settings/staff", label: "Zaměstnanci", icon: Users },
+      { href: "/settings/users", label: "Uživatelé", icon: UserCog },
     ],
   },
   {
@@ -50,10 +50,10 @@ export const pageTitles: Record<string, string> = {
   "/": "Přehled",
   "/attention": "Vyžaduje pozornost",
   "/periods": "Období a uzávěrka",
-  "/settings/buckets": "Skupiny provizí",
-  "/settings/rates": "Sazby",
-  "/settings/mapping": "Kategorie a služby",
+  "/settings/buckets": "Pravidla provizí",
+  "/settings/mapping": "Kategorie z CRM",
   "/settings/sources": "Zdroje",
   "/settings/staff": "Zaměstnanci",
+  "/settings/users": "Uživatelé",
   "/audit": "Historie změn",
 }

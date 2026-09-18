@@ -3,12 +3,14 @@ const ENTITY_LABEL: Record<string, string> = {
   sources: "Zdroje",
   staff: "Zaměstnanci",
   bucket_rates: "Sazby",
-  commission_buckets: "Skupiny",
+  commission_buckets: "Pravidla provizí",
   category_mapping: "Kategorie",
   service_exclusions: "Výjimky služeb",
   service_mapping: "Mapování služeb",
   services_catalog: "Číselník služeb",
   unmatched_ignored: "Ignorované položky",
+  users: "Uživatelé",
+  doctor_payouts: "Výplaty",
 }
 
 /** Czech label for an audit_log entity name. */

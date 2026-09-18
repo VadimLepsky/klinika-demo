@@ -18,7 +18,7 @@ import type { BucketOption } from "@/lib/queries/attention"
 const CREATE_SENTINEL = "__create__"
 
 /**
- * Bucket <select> with a built-in "+ Vytvořit novou" option that opens the
+ * Bucket <select> with a built-in "+ Vytvořit nové" option that opens the
  * bucket creation dialog inline and preselects the newly created bucket.
  */
 export function BucketSelect({
@@ -49,7 +49,7 @@ export function BucketSelect({
     const map: Record<string, string> = {}
     for (const b of buckets) map[b.bucket] = b.label
     for (const o of extraOptions) map[o.value] = o.label
-    map[CREATE_SENTINEL] = "+ Vytvořit novou"
+    map[CREATE_SENTINEL] = "+ Vytvořit nové"
     return map
   }, [buckets, extraOptions])
 
@@ -84,7 +84,7 @@ export function BucketSelect({
           <SelectGroup>
             <SelectItem value={CREATE_SENTINEL} className="text-primary">
               <Plus className="size-3.5" />
-              Vytvořit novou
+              Vytvořit nové
             </SelectItem>
           </SelectGroup>
         </SelectContent>

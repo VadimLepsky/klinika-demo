@@ -36,7 +36,7 @@ export function EditBucketDialog({
     startTransition(async () => {
       const res = await updateBucketLabel(bucket, value)
       if (res.ok) {
-        toast.success("Název skupiny byl aktualizován.")
+        toast.success("Název pravidla byl aktualizován.")
         setOpen(false)
       } else {
         toast.error(res.error)
@@ -56,13 +56,13 @@ export function EditBucketDialog({
         render={
           <Button variant="outline" size="sm">
             <Pencil data-icon="inline-start" />
-            Upravit
+            Přejmenovat
           </Button>
         }
       />
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Upravit skupinu</DialogTitle>
+          <DialogTitle>Upravit pravidlo</DialogTitle>
           <DialogDescription>Klíč a příjemce jsou po vytvoření neměnné.</DialogDescription>
         </DialogHeader>
         <FieldGroup>

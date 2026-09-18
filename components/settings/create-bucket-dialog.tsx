@@ -83,7 +83,7 @@ export function CreateBucketDialog({
     startTransition(async () => {
       const res = await createBucket(label, key, beneficiary as "source" | "performer", pct, monthInputToDate(month))
       if (res.ok && res.bucket) {
-        toast.success(`Skupina «${res.bucket.label}» byla vytvořena.`)
+        toast.success(`Pravidlo «${res.bucket.label}» bylo vytvořeno.`)
         onCreated?.(res.bucket)
         setOpen(false)
       } else if (!res.ok) {
@@ -97,9 +97,9 @@ export function CreateBucketDialog({
       {trigger ? <DialogTrigger render={trigger} /> : null}
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Nová skupina provizí</DialogTitle>
+          <DialogTitle>Nové pravidlo</DialogTitle>
           <DialogDescription>
-            Sazbu skupiny lze později změnit v sekci «Sazby».
+            Sazbu pravidla lze později změnit v sekci «Sazby».
           </DialogDescription>
         </DialogHeader>
 

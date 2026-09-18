@@ -3,18 +3,22 @@ import { notFound } from "next/navigation"
 import { ArrowLeft } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Label } from "@/components/ui/label"
 import { BucketBreakdown } from "@/components/doctor/bucket-breakdown"
 import { DoctorCharts } from "@/components/doctor/doctor-charts"
 import { LinesSection } from "@/components/doctor/lines-section"
 import { MonthSelector } from "@/components/dashboard/month-selector"
+import { PayoutCheckbox } from "@/components/dashboard/payout-checkbox"
 import { formatMonth } from "@/lib/format"
 import { withPeriod } from "@/lib/period-link"
 import { getPeriods } from "@/lib/queries/dashboard"
+import { getSessionUser } from "@/lib/session"
 import {
   getDoctorBucketBreakdown,
   getDoctorHeader,
   getDoctorLines,
   getDoctorMonthlySeries,
+  getDoctorPayoutStatus,
 } from "@/lib/queries/doctor"
 
 export const dynamic = "force-dynamic"
@@ -29,19 +33,23 @@ export default async function DoctorPage({
   const { master_id } = await params
   const { period: periodParam } = await searchParams
 
-  const [header, periods, series] = await Promise.all([
+  const [header, periods, series, sessionUser] = await Promise.all([
     getDoctorHeader(master_id),
     getPeriods(),
     getDoctorMonthlySeries(master_id),
+    getSessionUser(),
   ])
 
   if (!header) notFound()
 
   const selected = periods.find((p) => p.period === periodParam)?.period ?? periods[0]?.period ?? ""
 
-  const [breakdown, lines] = await Promise.all([
+  const [breakdown, lines, payoutStatus] = await Promise.all([
     selected ? getDoctorBucketBreakdown(master_id, selected) : Promise.resolve([]),
     selected ? getDoctorLines(master_id, selected) : Promise.resolve([]),
+    selected
+      ? getDoctorPayoutStatus(master_id, selected)
+      : Promise.resolve({ paid: false, paid_by: null, paid_at: null }),
   ])
 
   return (
@@ -66,13 +74,30 @@ export default async function DoctorPage({
               {header.is_doctor === false ? <Badge variant="outline">není lékař</Badge> : null}
               {header.is_doctor === null ? <Badge variant="outline">neurčeno</Badge> : null}
             </div>
-            {header.note ? <p className="text-sm text-muted-foreground text-pretty">{header.note}</p> : null}
           </div>
-          <MonthSelector periods={periods} current={selected} />
+          <div className="flex items-center gap-4">
+            {selected ? (
+              <Label className="gap-2">
+                <PayoutCheckbox
+                  key={`${payoutStatus.paid}-${payoutStatus.paid_by ?? ""}`}
+                  masterId={master_id}
+                  period={selected}
+                  paid={payoutStatus.paid}
+                  paidBy={payoutStatus.paid_by}
+                  paidAt={payoutStatus.paid_at}
+                  actorEmail={sessionUser?.email ?? ""}
+                  doctorName={header.full_name}
+                  showAriaLabel={false}
+                />
+                Vyplaceno
+              </Label>
+            ) : null}
+            <MonthSelector periods={periods} current={selected} />
+          </div>
         </div>
       </div>
 
-      <DoctorCharts series={series} />
+      <DoctorCharts series={series} selectedPeriod={selected} />
 
       <BucketBreakdown rows={breakdown} month={formatMonth(selected)} />
 

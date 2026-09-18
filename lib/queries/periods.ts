@@ -1,6 +1,7 @@
 import "server-only"
 import { db } from "@/lib/demo/store"
 import { periodKey } from "@/lib/format"
+import { getUnresolvedCountsByPeriod } from "@/lib/queries/unresolved"
 
 export type PeriodBlockers = {
   pendingReview: number
@@ -25,27 +26,26 @@ export type PeriodRow = {
  * Lists every period with its freeze blockers.
  *
  * A month may be frozen only when all four blocker counts are zero:
- *  - commission_lines with status = 'pending_review' in that month
+ *  - commission_lines with status = 'pending_review' in that month, still unresolved
+ *    (see lib/queries/unresolved.ts)
  *  - sources with status = 'unmapped' that appear in that month's lines
  *  - staff with is_doctor IS NULL appearing as beneficiary in that month
- *  - commission_lines with status = 'unmatched' whose item_id is NOT ignored
+ *  - commission_lines with status = 'unmatched', still unresolved (see
+ *    lib/queries/unresolved.ts)
  */
 export async function getPeriodsWithBlockers(): Promise<PeriodRow[]> {
   const state = db()
+  const unresolved = await getUnresolvedCountsByPeriod()
 
   return state.periods
     .slice()
     .sort((a, b) => (a.period < b.period ? 1 : -1))
     .map((p) => {
+      const periodStr = periodKey(p.period)
       const lines = state.commissionLines.filter((l) => l.period === p.period)
       const monthly = state.commissionMonthly.filter((m) => m.period === p.period)
+      const counts = unresolved.get(periodStr)
 
-      const pendingReview = lines.filter((l) => l.status === "pending_review").length
-      const unmatched = lines.filter(
-        (l) =>
-          l.status === "unmatched" &&
-          !state.unmatchedIgnored.some((ui) => ui.item_id === l.item_id),
-      ).length
       const unmappedSources = new Set(
         lines
           .filter((l) =>
@@ -64,8 +64,8 @@ export async function getPeriodsWithBlockers(): Promise<PeriodRow[]> {
       ).size
 
       const blockers: PeriodBlockers = {
-        pendingReview,
-        unmatched,
+        pendingReview: counts?.pendingReview ?? 0,
+        unmatched: counts?.unmatched ?? 0,
         unmappedSources,
         unflaggedStaff,
       }
@@ -76,7 +76,7 @@ export async function getPeriodsWithBlockers(): Promise<PeriodRow[]> {
         blockers.unflaggedStaff === 0
 
       return {
-        period: periodKey(p.period),
+        period: periodStr,
         status: p.status,
         frozen_at: p.frozen_at ? new Date(p.frozen_at).toISOString() : null,
         frozen_by: p.frozen_by,

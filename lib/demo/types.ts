@@ -105,7 +105,6 @@ export type CommissionMonthlyRec = {
 export type DoctorMonthlyStatsRec = {
   period: string
   master_id: string
-  referrals: number
   patients_served: number
 }
 
@@ -127,6 +126,30 @@ export type AuditRec = {
   new_value: unknown
 }
 
+/** One referral visit — mirrors a `visits` row that counts toward "Počet doporučení". */
+export type ReferralVisitRec = {
+  period: string
+  master_id: string
+}
+
+export type DoctorPayoutRec = {
+  period: string
+  master_id: string
+  paid_by: string
+  paid_at: string
+}
+
+export type Role = "admin" | "viewer"
+
+export type AppUserRec = {
+  id: string
+  email: string
+  full_name: string
+  role: Role
+  created_at: string
+  invited_by: string | null
+}
+
 export type DemoState = {
   periods: PeriodRec[]
   staff: StaffRec[]
@@ -140,7 +163,10 @@ export type DemoState = {
   commissionLines: CommissionLineRec[]
   commissionMonthly: CommissionMonthlyRec[]
   doctorMonthlyStats: DoctorMonthlyStatsRec[]
+  referralVisits: ReferralVisitRec[]
+  doctorPayouts: DoctorPayoutRec[]
   unmatchedIgnored: UnmatchedIgnoredRec[]
+  users: AppUserRec[]
   auditLog: AuditRec[]
   nextAuditId: number
   nextRowId: number

@@ -18,12 +18,23 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { PayoutCheckbox } from "@/components/dashboard/payout-checkbox"
 import { formatCoefficient, formatCurrency, formatNumber } from "@/lib/format"
+import { getCoefficientBadgeClassName, getCoefficientTooltip } from "@/lib/coefficient"
 import { withPeriod } from "@/lib/period-link"
 import { cn } from "@/lib/utils"
 import type { DoctorRow } from "@/lib/queries/dashboard"
 
-export function DoctorsTable({ doctors, period }: { doctors: DoctorRow[]; period: string }) {
+export function DoctorsTable({
+  doctors,
+  period,
+  actorEmail,
+}: {
+  doctors: DoctorRow[]
+  period: string
+  actorEmail: string
+}) {
   const router = useRouter()
 
   return (
@@ -33,7 +44,7 @@ export function DoctorsTable({ doctors, period }: { doctors: DoctorRow[]; period
         <CardDescription>Kliknutím na řádek otevřete kartu lékaře.</CardDescription>
       </CardHeader>
       <CardContent className="overflow-x-auto px-0">
-        <Table className="table-fixed w-full min-w-[920px]">
+        <Table className="table-fixed w-full min-w-[1010px]">
           <TableHeader>
             <TableRow className="bg-secondary/60 hover:bg-secondary/60">
               <TableHead className="pl-6">Lékař</TableHead>
@@ -41,13 +52,14 @@ export function DoctorsTable({ doctors, period }: { doctors: DoctorRow[]; period
               <TableHead className="w-[190px] text-right">Objem doporučených, Kč</TableHead>
               <TableHead className="w-[130px] text-right">Provize, Kč</TableHead>
               <TableHead className="w-[140px] text-right">Ošetřeno pacientů</TableHead>
+              <TableHead className="w-[90px] text-right">Vyplaceno</TableHead>
               <TableHead className="w-[130px] pr-6 text-right">Koeficient</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {doctors.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
+                <TableCell colSpan={7} className="py-10 text-center text-muted-foreground">
                   Za období nejsou data
                 </TableCell>
               </TableRow>
@@ -82,16 +94,34 @@ export function DoctorsTable({ doctors, period }: { doctors: DoctorRow[]; period
                     <TableCell className="whitespace-nowrap text-right tabular-nums">
                       {formatNumber(d.patients_served)}
                     </TableCell>
+                    <TableCell className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex justify-end">
+                        <PayoutCheckbox
+                          key={`${d.paid}-${d.paid_by ?? ""}`}
+                          masterId={d.master_id}
+                          period={period}
+                          paid={d.paid}
+                          paidBy={d.paid_by}
+                          paidAt={d.paid_at}
+                          actorEmail={actorEmail}
+                          doctorName={d.full_name}
+                        />
+                      </div>
+                    </TableCell>
                     <TableCell className="whitespace-nowrap pr-6 text-right">
-                      <Badge
-                        variant="secondary"
-                        className={cn(
-                          "tabular-nums",
-                          coef > 100 && "bg-status-pending text-status-pending-foreground",
-                        )}
-                      >
-                        {formatCoefficient(d.referrals, d.patients_served)}
-                      </Badge>
+                      <Tooltip>
+                        <TooltipTrigger
+                          render={
+                            <Badge
+                              variant="secondary"
+                              className={cn("tabular-nums", getCoefficientBadgeClassName(coef))}
+                            >
+                              {formatCoefficient(d.referrals, d.patients_served)}
+                            </Badge>
+                          }
+                        />
+                        <TooltipContent>{getCoefficientTooltip(coef)}</TooltipContent>
+                      </Tooltip>
                     </TableCell>
                   </TableRow>
                 )

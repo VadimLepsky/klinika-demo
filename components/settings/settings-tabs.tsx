@@ -5,9 +5,8 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 
 const TABS = [
-  { href: "/settings/buckets", label: "Skupiny provizí" },
-  { href: "/settings/rates", label: "Sazby" },
-  { href: "/settings/mapping", label: "Kategorie a služby" },
+  { href: "/settings/buckets", label: "Pravidla provizí" },
+  { href: "/settings/mapping", label: "Kategorie z CRM" },
   { href: "/settings/sources", label: "Zdroje" },
   { href: "/settings/staff", label: "Zaměstnanci" },
 ]

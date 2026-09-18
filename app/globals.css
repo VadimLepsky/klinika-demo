@@ -50,6 +50,8 @@
   --color-status-pending-foreground: var(--status-pending-foreground);
   --color-status-unmatched: var(--status-unmatched);
   --color-status-unmatched-foreground: var(--status-unmatched-foreground);
+  --color-status-info: var(--status-info);
+  --color-status-info-foreground: var(--status-info-foreground);
 
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
@@ -96,6 +98,8 @@
   --status-pending-foreground: #92600a;
   --status-unmatched: #fbeaea;
   --status-unmatched-foreground: #a30000;
+  --status-info: #e8eefc;
+  --status-info-foreground: #2c4bc4;
 
   --radius: 0.625rem;
 
@@ -145,6 +149,8 @@
   --status-pending-foreground: #fbbf24;
   --status-unmatched: #3a1414;
   --status-unmatched-foreground: #f87171;
+  --status-info: #16234a;
+  --status-info-foreground: #7d9cf5;
 
   --sidebar: #0a0e1f;
   --sidebar-foreground: #eef2fb;
