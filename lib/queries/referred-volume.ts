@@ -23,16 +23,23 @@ export type ReferredVolumeRow = {
  * Pass a period to scope to one month (KPI card, doctors table); omit to get
  * every row across all periods (monthly series, per-doctor charts).
  * Pass masterId to scope to one doctor across all months (doctor-page chart).
+ * Pass masterIds to scope to a set of doctors (specialization filter on "/").
  */
-export async function getReferredVolumeRows(period?: string, masterId?: string): Promise<ReferredVolumeRow[]> {
+export async function getReferredVolumeRows(
+  period?: string,
+  masterId?: string,
+  masterIds?: string[] | null,
+): Promise<ReferredVolumeRow[]> {
   const state = db()
   const sourceBuckets = new Set(state.buckets.filter((b) => b.beneficiary === "source").map((b) => b.bucket))
+  const masterIdSet = masterIds ? new Set(masterIds) : null
 
   const rows = state.commissionMonthly.filter(
     (m) =>
       sourceBuckets.has(m.bucket) &&
       (!period || m.period === period) &&
-      (!masterId || m.master_id === masterId),
+      (!masterId || m.master_id === masterId) &&
+      (!masterIdSet || masterIdSet.has(m.master_id)),
   )
 
   const grouped = new Map<string, number>()
@@ -48,14 +55,17 @@ export async function getReferredVolumeRows(period?: string, masterId?: string):
 }
 
 /** Total referred volume for one month — "Objem doporučených" KPI card on "/". */
-export async function getReferredVolumeTotal(period: string): Promise<number> {
-  const rows = await getReferredVolumeRows(period)
+export async function getReferredVolumeTotal(period: string, masterIds?: string[] | null): Promise<number> {
+  const rows = await getReferredVolumeRows(period, undefined, masterIds)
   return rows.reduce((sum, r) => sum + r.referred_base, 0)
 }
 
 /** Referred volume per doctor for one month — doctors table column. */
-export async function getReferredVolumeByDoctor(period: string): Promise<Map<string, number>> {
-  const rows = await getReferredVolumeRows(period)
+export async function getReferredVolumeByDoctor(
+  period: string,
+  masterIds?: string[] | null,
+): Promise<Map<string, number>> {
+  const rows = await getReferredVolumeRows(period, undefined, masterIds)
   const map = new Map<string, number>()
   for (const r of rows) {
     map.set(r.master_id, (map.get(r.master_id) ?? 0) + r.referred_base)

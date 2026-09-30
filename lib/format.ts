@@ -19,6 +19,13 @@ export function formatNumber(value: number | string | null | undefined): string 
   return intFmt.format(n)
 }
 
+/** Whole crowns, no haléře — for KPI cards and stat tiles where width matters. */
+export function formatCurrencyRounded(value: number | string | null | undefined): string {
+  const n = typeof value === "string" ? Number.parseFloat(value) : (value ?? 0)
+  if (!Number.isFinite(n)) return "—"
+  return `${intFmt.format(Math.round(n))} Kč`
+}
+
 /** Rate stored as 0.07 => "7%". */
 export function formatRate(rate: number | string | null | undefined): string {
   const n = typeof rate === "string" ? Number.parseFloat(rate) : (rate ?? 0)

@@ -229,6 +229,35 @@ export async function getStaff(): Promise<StaffRow[]> {
     }))
 }
 
+/* ----------------------------- Doctor rates ------------------------------ */
+
+export type DoctorRateOverride = { enabled: boolean; rate: number | null }
+
+/**
+ * Currently active (valid_to IS NULL) per-doctor rate overrides for ALL doctors,
+ * keyed master_id -> bucket -> { enabled, rate }. One active row per (doctor, bucket)
+ * always means a real customization (disabled, or a personal rate), because the
+ * save action never persists the "general rate + enabled" default.
+ */
+export async function getActiveDoctorBucketRates(): Promise<
+  Record<string, Record<string, DoctorRateOverride>>
+> {
+  const out: Record<string, Record<string, DoctorRateOverride>> = {}
+  for (const r of db().doctorBucketRates) {
+    if (r.valid_to !== null) continue
+    ;(out[r.master_id] ??= {})[r.bucket] = { enabled: r.enabled, rate: r.rate }
+  }
+  return out
+}
+
+/** First day of the latest NON-frozen period as "YYYY-MM-DD", or null if none. */
+export async function getLatestNonFrozenPeriod(): Promise<string | null> {
+  const nonFrozen = db()
+    .periods.filter((p) => p.status !== "frozen")
+    .sort((a, b) => (a.period < b.period ? 1 : -1))
+  return nonFrozen[0] ? periodKey(nonFrozen[0].period) : null
+}
+
 /* --------------------------------- Helpers -------------------------------- */
 
 export { periodKey }

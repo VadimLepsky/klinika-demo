@@ -3,7 +3,6 @@ import { db } from "@/lib/demo/store"
 import { getDoctorDisplayName } from "@/lib/doctor-name"
 import { periodKey } from "@/lib/format"
 import type { LineStatus } from "@/components/status-chip"
-import { getReferralVisits } from "@/lib/queries/referrals"
 import { getReferredVolumeByMonth } from "@/lib/queries/referred-volume"
 
 export type DoctorHeader = {
@@ -58,43 +57,76 @@ export async function getDoctorPayoutStatus(masterId: string, period: string): P
   }
 }
 
+/** A doctor_monthly_stats row for one period; null when the worker has no row. */
+export type DoctorMonthStats = {
+  patients_served: number
+  /** Referral visits — secondary metric. */
+  referrals: number
+  /** Unique patients referred — main metric. */
+  referred_patients: number
+  referrals_commissionable: number
+  visits_performed: number
+  self_records: number
+  showup_done_count: number
+  showup_done_sum: number
+  showup_cancel_count: number
+  showup_cancel_sum: number
+  consult_offline_primary: number
+  consult_offline_repeat: number
+  consult_online_primary: number
+  consult_online_repeat: number
+}
+
 export type DoctorMonthPoint = {
   period: string
+  /** Unique patients referred in the month (main "Pacientů doporučeno" metric). */
   referrals: number
   referred_base: number
   commission: number
   patients_served: number
+  stats: DoctorMonthStats | null
 }
 
 export async function getDoctorMonthlySeries(masterId: string): Promise<DoctorMonthPoint[]> {
   const state = db()
-  const [referralVisits, referredVolumeByPeriod] = await Promise.all([
-    getReferralVisits(undefined, masterId),
-    getReferredVolumeByMonth(masterId),
-  ])
-
-  const referralsByPeriod = new Map<string, number>()
-  for (const v of referralVisits) {
-    referralsByPeriod.set(v.period, (referralsByPeriod.get(v.period) ?? 0) + 1)
-  }
+  const referredVolumeByPeriod = await getReferredVolumeByMonth(masterId)
 
   return state.periods
     .slice()
     .sort((a, b) => (a.period < b.period ? -1 : 1))
     .map((p) => {
       const period = periodKey(p.period)
-      const stats = state.doctorMonthlyStats.find(
-        (d) => d.period === p.period && d.master_id === masterId,
-      )
+      const s = state.doctorMonthlyStats.find((d) => d.period === p.period && d.master_id === masterId)
       const commission = state.commissionMonthly
         .filter((m) => m.period === p.period && m.master_id === masterId)
-        .reduce((s, m) => s + m.commission, 0)
+        .reduce((sum, m) => sum + m.commission, 0)
+
+      const stats: DoctorMonthStats | null = s
+        ? {
+            patients_served: s.patients_served,
+            referrals: s.referrals,
+            referred_patients: s.referred_patients,
+            referrals_commissionable: s.referrals_commissionable,
+            visits_performed: s.visits_performed,
+            self_records: s.self_records,
+            showup_done_count: s.showup_done_count,
+            showup_done_sum: s.showup_done_sum,
+            showup_cancel_count: s.showup_cancel_count,
+            showup_cancel_sum: s.showup_cancel_sum,
+            consult_offline_primary: s.consult_offline_primary,
+            consult_offline_repeat: s.consult_offline_repeat,
+            consult_online_primary: s.consult_online_primary,
+            consult_online_repeat: s.consult_online_repeat,
+          }
+        : null
+
       return {
         period,
-        referrals: referralsByPeriod.get(period) ?? 0,
+        referrals: stats?.referred_patients ?? 0,
         referred_base: referredVolumeByPeriod.get(period) ?? 0,
         patients_served: stats?.patients_served ?? 0,
         commission,
+        stats,
       }
     })
 }
@@ -105,6 +137,8 @@ export type BucketBreakdownRow = {
   qty: number
   base: number
   rate: number
+  /** General rule rate in effect for this period, for comparison. Null if none. */
+  general_rate: number | null
   commission: number
 }
 
@@ -117,12 +151,16 @@ export async function getDoctorBucketBreakdown(
     .filter((m) => m.master_id === masterId && m.period === period)
     .map((m) => {
       const bucket = state.buckets.find((b) => b.bucket === m.bucket)
+      const generalRate = state.bucketRates.find(
+        (r) => r.bucket === m.bucket && r.valid_from <= period && (r.valid_to === null || r.valid_to > period),
+      )
       return {
         bucket: m.bucket,
         label: bucket?.label ?? m.bucket,
         qty: m.qty,
         base: m.base,
         rate: m.rate,
+        general_rate: generalRate?.rate ?? null,
         commission: m.commission,
         sort_order: bucket?.sort_order ?? 1e9,
       }

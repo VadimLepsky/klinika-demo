@@ -5,7 +5,6 @@ import { Search } from "lucide-react"
 import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
 import { Spinner } from "@/components/ui/spinner"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -30,7 +29,7 @@ const STATUS_LABEL: Record<string, string> = {
 function SourceRowItem({ row, doctors }: { row: SourceRow; doctors: StaffOption[] }) {
   const [status, setStatus] = useState(row.status)
   const [master, setMaster] = useState(row.master_id ?? "")
-  const [note, setNote] = useState(row.note ?? "")
+  const [note] = useState(row.note ?? "")
   const [pending, startTransition] = useTransition()
 
   const dirty =
@@ -89,16 +88,6 @@ function SourceRowItem({ row, doctors }: { row: SourceRow; doctors: StaffOption[
           </SelectContent>
         </Select>
       </TableCell>
-      <TableCell>
-        <Input
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          placeholder="Poznámka"
-          disabled={pending}
-          title={note || undefined}
-          className="w-full"
-        />
-      </TableCell>
       <TableCell className="whitespace-nowrap text-right pr-4">
         <Button size="sm" onClick={save} disabled={pending || !dirty}>
           {pending ? <Spinner data-icon="inline-start" /> : null}
@@ -143,7 +132,6 @@ export function SourcesTable({ sources, doctors }: { sources: SourceRow[]; docto
               <TableHead className="pl-4">Zdroj</TableHead>
               <TableHead className="w-[150px]">Stav</TableHead>
               <TableHead className="w-[220px]">Lékař</TableHead>
-              <TableHead className="w-[200px]">Poznámka</TableHead>
               <TableHead className="w-[110px] text-right pr-4">Akce</TableHead>
             </TableRow>
           </TableHeader>
@@ -152,7 +140,7 @@ export function SourcesTable({ sources, doctors }: { sources: SourceRow[]; docto
               filtered.map((s) => <SourceRowItem key={s.source_id} row={s} doctors={doctors} />)
             ) : (
               <TableRow>
-                <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
+                <TableCell colSpan={4} className="py-8 text-center text-muted-foreground">
                   Dotazu neodpovídá žádný zdroj.
                 </TableCell>
               </TableRow>

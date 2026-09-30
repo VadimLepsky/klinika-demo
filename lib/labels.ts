@@ -11,6 +11,11 @@ const ENTITY_LABEL: Record<string, string> = {
   unmatched_ignored: "Ignorované položky",
   users: "Uživatelé",
   doctor_payouts: "Výplaty",
+  specializations: "Specializace",
+  staff_specializations: "Specializace zaměstnanců",
+  kpi_profiles: "KPI profily",
+  doctor_kpi_profiles: "Přiřazení KPI",
+  doctor_bucket_rates: "Osobní sazby",
 }
 
 /** Czech label for an audit_log entity name. */

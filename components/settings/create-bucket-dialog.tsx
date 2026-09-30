@@ -19,7 +19,6 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -98,9 +97,6 @@ export function CreateBucketDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Nové pravidlo</DialogTitle>
-          <DialogDescription>
-            Sazbu pravidla lze později změnit v sekci «Sazby».
-          </DialogDescription>
         </DialogHeader>
 
         <FieldGroup>

@@ -24,11 +24,12 @@ export function AppSidebar() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const period = searchParams.get("period")
+  const spec = searchParams.get("spec")
 
   const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href))
 
   const linkHref = (href: string) =>
-    period && PERIOD_AWARE_ROUTES.includes(href) ? withPeriod(href, period) : href
+    PERIOD_AWARE_ROUTES.includes(href) ? withPeriod(href, period, href === "/" ? spec : null) : href
 
   return (
     <Sidebar collapsible="none" className="h-svh sticky top-0 border-r border-sidebar-border">

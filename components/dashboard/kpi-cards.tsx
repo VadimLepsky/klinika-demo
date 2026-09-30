@@ -1,23 +1,91 @@
-import { Coins, Send, Stethoscope, Wallet } from "lucide-react"
+import type { ReactNode } from "react"
+import { ArrowDownRight, ArrowUpRight, Coins, Repeat, Send, Stethoscope, Wallet } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { formatCoefficient, formatCurrency, formatNumber } from "@/lib/format"
-import type { DashboardKpis } from "@/lib/queries/dashboard"
+import { DoctorsWithoutCommission } from "@/components/dashboard/doctors-without-commission"
+import { formatCoefficient, formatCurrencyRounded, formatNumber } from "@/lib/format"
+import type { DashboardKpis, DoctorWithoutCommission } from "@/lib/queries/dashboard"
 
-export function KpiCards({ kpis }: { kpis: DashboardKpis }) {
-  const items = [
-    { label: "Provize celkem", value: formatCurrency(kpis.totalCommission), icon: Coins },
+/** Change vs previous month, in %. Hidden when there is no previous month or it was 0. */
+function Delta({ current, previous }: { current: number; previous: number | null }) {
+  if (previous == null || previous === 0) return null
+  const pct = ((current - previous) / previous) * 100
+  const rounded = Math.round(pct)
+  if (rounded === 0) {
+    return <span className="text-xs font-medium tabular-nums text-muted-foreground">0%</span>
+  }
+  const up = rounded > 0
+  const Icon = up ? ArrowUpRight : ArrowDownRight
+  return (
+    <span
+      className={`inline-flex items-center gap-0.5 text-xs font-medium tabular-nums ${
+        up ? "text-status-accrued-foreground" : "text-status-unmatched-foreground"
+      }`}
+      title="Ve srovnání s předchozím měsícem"
+    >
+      {up ? "+" : "−"}
+      {Math.abs(rounded)}%
+      <Icon className="size-3.5" />
+    </span>
+  )
+}
+
+type Item = {
+  label: string
+  value: string
+  icon: typeof Coins
+  secondary?: ReactNode
+  delta?: ReactNode
+}
+
+export function KpiCards({
+  kpis,
+  prev,
+  withoutCommission,
+  period,
+  spec,
+}: {
+  kpis: DashboardKpis
+  prev: DashboardKpis | null
+  withoutCommission: DoctorWithoutCommission[]
+  period: string
+  spec: string | null
+}) {
+  const items: Item[] = [
     {
-      label: "Počet doporučení",
-      value: formatNumber(kpis.totalReferrals),
-      icon: Send,
-      secondary: `koeficient ${formatCoefficient(kpis.totalReferrals, kpis.totalPatientsServed)}`,
+      label: "Provize celkem",
+      value: formatCurrencyRounded(kpis.totalCommission),
+      icon: Coins,
+      delta: <Delta current={kpis.totalCommission} previous={prev?.totalCommission ?? null} />,
     },
-    { label: "Objem doporučených", value: formatCurrency(kpis.totalBase), icon: Wallet },
-    { label: "Lékařů s provizí", value: formatNumber(kpis.doctorsWithCommission), icon: Stethoscope },
+    {
+      label: "Doporučeno pacientů",
+      value: formatNumber(kpis.totalReferredPatients),
+      icon: Send,
+      secondary: `koeficient ${formatCoefficient(kpis.totalReferredPatients, kpis.totalPatientsServed)}`,
+      delta: <Delta current={kpis.totalReferredPatients} previous={prev?.totalReferredPatients ?? null} />,
+    },
+    {
+      label: "Objem doporučených",
+      value: formatCurrencyRounded(kpis.totalBase),
+      icon: Wallet,
+      delta: <Delta current={kpis.totalBase} previous={prev?.totalBase ?? null} />,
+    },
+    {
+      label: "Lékařů s provizí",
+      value: formatNumber(kpis.doctorsWithCommission),
+      icon: Stethoscope,
+      secondary: <DoctorsWithoutCommission doctors={withoutCommission} period={period} spec={spec} />,
+    },
+    {
+      label: "Přeobjednání",
+      value: formatNumber(kpis.totalSelfRecords),
+      icon: Repeat,
+      secondary: `koeficient ${formatCoefficient(kpis.totalSelfRecords, kpis.totalVisitsPerformed)}`,
+    },
   ]
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
       {items.map((item) => (
         <Card key={item.label}>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -27,8 +95,11 @@ export function KpiCards({ kpis }: { kpis: DashboardKpis }) {
             </span>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-semibold tracking-tight tabular-nums text-foreground">
-              {item.value}
+            <div className="flex flex-wrap items-baseline gap-x-2">
+              <div className="whitespace-nowrap text-2xl font-semibold tracking-tight tabular-nums text-foreground">
+                {item.value}
+              </div>
+              {item.delta}
             </div>
             {item.secondary ? (
               <div className="mt-1 text-xs text-muted-foreground tabular-nums">{item.secondary}</div>

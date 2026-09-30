@@ -18,6 +18,15 @@ const FIELD_LABEL: Record<string, string> = {
   reason: "důvod",
   role: "role",
   period: "období",
+  active: "aktivní",
+  enabled: "načítat se",
+  maxBonus: "max. bonus",
+  maxPenalty: "max. postih",
+  minSample: "min. vzorek",
+  bands: "prahy",
+  primary: "hlavní",
+  additional: "další",
+  profile_id: "profil (id)",
 }
 
 const VALUE_LABEL: Record<string, string> = {

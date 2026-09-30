@@ -9,6 +9,8 @@ const TABS = [
   { href: "/settings/mapping", label: "Kategorie z CRM" },
   { href: "/settings/sources", label: "Zdroje" },
   { href: "/settings/staff", label: "Zaměstnanci" },
+  { href: "/settings/specializations", label: "Specializace" },
+  { href: "/settings/kpi", label: "KPI profily" },
 ]
 
 export function SettingsTabs() {

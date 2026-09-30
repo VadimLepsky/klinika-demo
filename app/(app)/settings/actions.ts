@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { db, newId } from "@/lib/demo/store"
 import { writeAudit } from "@/lib/audit"
+import { getActorEmail } from "@/lib/session"
 
 type ActionResult = { ok: true } | { ok: false; error: string }
 
@@ -299,6 +300,113 @@ export async function updateStaff(
     revalidatePath("/settings/staff")
     revalidatePath("/attention")
     revalidatePath("/periods")
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Chyba" }
+  }
+}
+
+/**
+ * Save a doctor's per-bucket commission overrides, versioned by valid_from.
+ *
+ * Desired state per rule:
+ *  - switch off               -> { enabled: false, rate: null }  (no commission)
+ *  - switch on, empty rate     -> use the general rate            (no active row)
+ *  - switch on, personal rate  -> { enabled: true, rate }         (personal rate)
+ *
+ * For every rule whose state actually changes: close the currently active row
+ * (valid_to = validFrom), drop any row that already starts at validFrom (same-month
+ * correction), then insert the new row unless the new state is the "general rate +
+ * enabled" default. Existing rows are never mutated in place — history stays intact.
+ * One audit_log entry is written per changed rule.
+ */
+export async function saveDoctorBucketRates(
+  masterId: string,
+  validFrom: string,
+  rules: { bucket: string; enabled: boolean; ratePct: number | null }[],
+): Promise<ActionResult> {
+  const actor = await getActorEmail()
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(validFrom)) {
+    return { ok: false, error: "Neplatné datum." }
+  }
+
+  try {
+    const state = db()
+    const period = state.periods.find((p) => p.period === validFrom)
+    if (period?.status === "frozen") {
+      return { ok: false, error: "Měsíc je zmrazen — zvolte jiný." }
+    }
+
+    const validBuckets = new Set(state.buckets.map((b) => b.bucket))
+
+    type OverrideState = { enabled: boolean; rate: number | null }
+    const currentState = (bucket: string): OverrideState => {
+      const active = state.doctorBucketRates.find(
+        (r) => r.master_id === masterId && r.bucket === bucket && r.valid_to === null,
+      )
+      return active ? { enabled: active.enabled, rate: active.rate } : { enabled: true, rate: null }
+    }
+
+    let changed = 0
+
+    for (const rule of rules) {
+      if (!validBuckets.has(rule.bucket)) continue
+
+      let desired: OverrideState
+      if (!rule.enabled) {
+        desired = { enabled: false, rate: null }
+      } else if (rule.ratePct == null) {
+        desired = { enabled: true, rate: null }
+      } else {
+        if (!Number.isFinite(rule.ratePct) || rule.ratePct < 0 || rule.ratePct > 100) {
+          return { ok: false, error: "Sazba musí být v rozmezí 0–100 %." }
+        }
+        desired = { enabled: true, rate: Math.round((rule.ratePct / 100) * 10000) / 10000 }
+      }
+
+      const current = currentState(rule.bucket)
+      if (current.enabled === desired.enabled && current.rate === desired.rate) continue
+      changed++
+
+      for (const r of state.doctorBucketRates) {
+        if (
+          r.master_id === masterId &&
+          r.bucket === rule.bucket &&
+          r.valid_to === null &&
+          r.valid_from < validFrom
+        ) {
+          r.valid_to = validFrom
+        }
+      }
+      state.doctorBucketRates = state.doctorBucketRates.filter(
+        (r) => !(r.master_id === masterId && r.bucket === rule.bucket && r.valid_from === validFrom),
+      )
+
+      const isDefault = desired.enabled && desired.rate == null
+      if (!isDefault) {
+        state.doctorBucketRates.push({
+          master_id: masterId,
+          bucket: rule.bucket,
+          enabled: desired.enabled,
+          rate: desired.rate,
+          valid_from: validFrom,
+          valid_to: null,
+        })
+      }
+
+      await writeAudit({
+        action: "doctor_rate.update",
+        entity: "doctor_bucket_rates",
+        entityId: `${masterId}:${rule.bucket}`,
+        oldValue: { enabled: current.enabled, rate: current.rate },
+        newValue: { enabled: desired.enabled, rate: desired.rate },
+      })
+    }
+
+    if (changed === 0) return { ok: true }
+
+    revalidatePath("/settings/staff")
     return { ok: true }
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Chyba" }

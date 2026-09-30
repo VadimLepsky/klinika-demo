@@ -5,7 +5,6 @@ import { Search } from "lucide-react"
 import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
 import { Spinner } from "@/components/ui/spinner"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -18,7 +17,12 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { updateStaff } from "@/app/(app)/settings/actions"
-import type { StaffRow } from "@/lib/queries/settings"
+import { DoctorRatesDialog, type DoctorRateRule } from "@/components/settings/doctor-rates-dialog"
+import { DoctorKpiDialog } from "@/components/settings/doctor-kpi-dialog"
+import type { DoctorRateOverride, StaffRow } from "@/lib/queries/settings"
+import { DoctorSpecializationsDialog } from "@/components/settings/doctor-specializations-dialog"
+import type { DoctorSpecializations, Specialization } from "@/lib/queries/specializations"
+import type { DoctorKpiBadge, DoctorKpiHistoryRow, KpiProfile, MonthOption } from "@/lib/queries/kpi"
 
 const DOCTOR_YES = "yes"
 const DOCTOR_NO = "no"
@@ -41,9 +45,35 @@ function valueToFlag(v: string): boolean | null {
   return null
 }
 
-function StaffRowItem({ row }: { row: StaffRow }) {
+function StaffRowItem({
+  row,
+  rateRules,
+  overrides,
+  hasPersonalRates,
+  defaultMonth,
+  minMonth,
+  specs,
+  specOptions,
+  kpiProfiles,
+  kpiBadge,
+  kpiHistory,
+  kpiMonthOptions,
+}: {
+  row: StaffRow
+  rateRules: DoctorRateRule[]
+  overrides: Record<string, DoctorRateOverride>
+  hasPersonalRates: boolean
+  defaultMonth: string
+  minMonth: string
+  specs: DoctorSpecializations | undefined
+  specOptions: Specialization[]
+  kpiProfiles: KpiProfile[]
+  kpiBadge: DoctorKpiBadge | undefined
+  kpiHistory: DoctorKpiHistoryRow[]
+  kpiMonthOptions: MonthOption[]
+}) {
   const [flag, setFlag] = useState(flagToValue(row.is_doctor))
-  const [note, setNote] = useState(row.note ?? "")
+  const [note] = useState(row.note ?? "")
   const [pending, startTransition] = useTransition()
 
   const dirty = flag !== flagToValue(row.is_doctor) || (note || "") !== (row.note ?? "")
@@ -51,18 +81,24 @@ function StaffRowItem({ row }: { row: StaffRow }) {
   const save = () => {
     startTransition(async () => {
       const res = await updateStaff(row.master_id, valueToFlag(flag), note || null)
-      if (res.ok) toast.success(`«${row.full_name}» uloženo.`)
+      if (res.ok) toast.success(`„${row.full_name}“ uloženo.`)
       else toast.error(res.error)
     })
   }
 
   return (
     <TableRow>
-      <TableCell
-        className="max-w-0 truncate pl-4 font-medium text-foreground"
-        title={row.full_name}
-      >
-        {row.full_name}
+      <TableCell className="max-w-0 pl-4 font-medium text-foreground">
+        <div className="flex items-center gap-2">
+          <span className="min-w-0 truncate" title={row.full_name}>
+            {row.full_name}
+          </span>
+          {hasPersonalRates ? (
+            <Badge variant="secondary" className="shrink-0 whitespace-nowrap">
+              osobní sazby
+            </Badge>
+          ) : null}
+        </div>
       </TableCell>
       <TableCell>
         <Select value={flag} onValueChange={setFlag} disabled={pending} items={DOCTOR_ITEMS}>
@@ -78,27 +114,80 @@ function StaffRowItem({ row }: { row: StaffRow }) {
           </SelectContent>
         </Select>
       </TableCell>
-      <TableCell>
-        <Input
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          placeholder="Poznámka"
-          disabled={pending}
-          title={note || undefined}
-          className="w-full"
-        />
+      <TableCell className="max-w-0">
+        {row.is_doctor === true ? (
+          <DoctorSpecializationsDialog
+            masterId={row.master_id}
+            doctorName={row.full_name}
+            specs={specs}
+            options={specOptions}
+          />
+        ) : (
+          <span className="text-sm text-muted-foreground">—</span>
+        )}
       </TableCell>
-      <TableCell className="whitespace-nowrap text-right pr-4">
-        <Button size="sm" onClick={save} disabled={pending || !dirty}>
-          {pending ? <Spinner data-icon="inline-start" /> : null}
-          Uložit
-        </Button>
+      <TableCell className="max-w-0">
+        {row.is_doctor === true ? (
+          <DoctorKpiDialog
+            masterId={row.master_id}
+            doctorName={row.full_name}
+            profiles={kpiProfiles}
+            current={kpiBadge}
+            history={kpiHistory}
+            defaultMonth={defaultMonth}
+            monthOptions={kpiMonthOptions}
+          />
+        ) : (
+          <span className="text-sm text-muted-foreground">—</span>
+        )}
+      </TableCell>
+      <TableCell className="whitespace-nowrap pr-4">
+        <div className="flex items-center justify-end gap-2">
+          {row.is_doctor === true ? (
+            <DoctorRatesDialog
+              masterId={row.master_id}
+              doctorName={row.full_name}
+              rules={rateRules}
+              overrides={overrides}
+              defaultMonth={defaultMonth}
+              minMonth={minMonth}
+            />
+          ) : null}
+          <Button size="sm" onClick={save} disabled={pending || !dirty}>
+            {pending ? <Spinner data-icon="inline-start" /> : null}
+            Uložit
+          </Button>
+        </div>
       </TableCell>
     </TableRow>
   )
 }
 
-export function StaffTable({ staff }: { staff: StaffRow[] }) {
+export function StaffTable({
+  staff,
+  rateRules,
+  overridesByMaster,
+  defaultMonth,
+  minMonth,
+  specsByMaster,
+  specOptions,
+  kpiProfiles,
+  kpiBadgeByMaster,
+  kpiHistoryByMaster,
+  kpiMonthOptions,
+}: {
+  staff: StaffRow[]
+  rateRules: DoctorRateRule[]
+  overridesByMaster: Record<string, Record<string, DoctorRateOverride>>
+  defaultMonth: string
+  minMonth: string
+  specsByMaster: Record<string, DoctorSpecializations>
+  specOptions: Specialization[]
+  kpiProfiles: KpiProfile[]
+  kpiBadgeByMaster: Record<string, DoctorKpiBadge>
+  kpiHistoryByMaster: Record<string, DoctorKpiHistoryRow[]>
+  kpiMonthOptions: MonthOption[]
+}) {
   const [q, setQ] = useState("")
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase()
@@ -122,21 +211,38 @@ export function StaffTable({ staff }: { staff: StaffRow[] }) {
         <Badge variant="secondary">{filtered.length}</Badge>
       </div>
       <div className="overflow-x-auto rounded-lg border border-border">
-        <Table className="table-fixed w-full min-w-[760px]">
+        <Table className="table-fixed w-full min-w-[1080px]">
           <TableHeader>
             <TableRow>
               <TableHead className="pl-4">Zaměstnanec</TableHead>
               <TableHead className="w-[150px]">Označení</TableHead>
-              <TableHead className="w-[220px]">Poznámka</TableHead>
-              <TableHead className="w-[110px] text-right pr-4">Akce</TableHead>
+              <TableHead className="w-[220px]">Specializace</TableHead>
+              <TableHead className="w-[180px]">KPI</TableHead>
+              <TableHead className="w-[210px] text-right pr-4">Akce</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filtered.length > 0 ? (
-              filtered.map((s) => <StaffRowItem key={s.master_id} row={s} />)
+              filtered.map((s) => (
+                <StaffRowItem
+                  key={s.master_id}
+                  row={s}
+                  rateRules={rateRules}
+                  overrides={overridesByMaster[s.master_id] ?? {}}
+                  hasPersonalRates={!!overridesByMaster[s.master_id]}
+                  defaultMonth={defaultMonth}
+                  minMonth={minMonth}
+                  specs={specsByMaster[s.master_id]}
+                  specOptions={specOptions}
+                  kpiProfiles={kpiProfiles}
+                  kpiBadge={kpiBadgeByMaster[s.master_id]}
+                  kpiHistory={kpiHistoryByMaster[s.master_id] ?? []}
+                  kpiMonthOptions={kpiMonthOptions}
+                />
+              ))
             ) : (
               <TableRow>
-                <TableCell colSpan={4} className="py-8 text-center text-muted-foreground">
+                <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
                   Dotazu neodpovídá žádný zaměstnanec.
                 </TableCell>
               </TableRow>

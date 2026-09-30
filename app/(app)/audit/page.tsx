@@ -34,6 +34,20 @@ const ACTION_LABEL: Record<string, string> = {
   "user.role_change": "Změna role",
   "payout.mark": "Vyplaceno",
   "payout.unmark": "Zrušena výplata",
+  "specialization.create": "Vytvořena specializace",
+  "specialization.update": "Změněna specializace",
+  "specialization.activate": "Specializace aktivována",
+  "specialization.deactivate": "Specializace deaktivována",
+  "specialization.delete": "Smazána specializace",
+  "staff.specializations": "Specializace lékaře",
+  "kpi_profile.create": "Vytvořen KPI profil",
+  "kpi_profile.update": "Změněn KPI profil",
+  "kpi_profile.activate": "KPI profil aktivován",
+  "kpi_profile.deactivate": "KPI profil deaktivován",
+  "kpi_profile.delete": "Smazán KPI profil",
+  "doctor.kpi_profile": "KPI přiřazeno lékaři",
+  "doctor.kpi_profile.delete": "Odebráno KPI přiřazení",
+  "doctor_rate.update": "Osobní sazba lékaře",
 }
 
 export default async function AuditPage({

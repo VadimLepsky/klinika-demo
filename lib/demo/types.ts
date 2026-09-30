@@ -102,10 +102,28 @@ export type CommissionMonthlyRec = {
   commission: number
 }
 
+/**
+ * One doctor's monthly activity snapshot, as the (fictional) external worker
+ * would produce it. `referred_patients` is the headline "doporučeno pacientů"
+ * metric (unique patients); `referrals` is the raw referral-visit count.
+ */
 export type DoctorMonthlyStatsRec = {
   period: string
   master_id: string
   patients_served: number
+  referrals: number
+  referred_patients: number
+  referrals_commissionable: number
+  visits_performed: number
+  self_records: number
+  showup_done_count: number
+  showup_done_sum: number
+  showup_cancel_count: number
+  showup_cancel_sum: number
+  consult_offline_primary: number
+  consult_offline_repeat: number
+  consult_online_primary: number
+  consult_online_repeat: number
 }
 
 export type UnmatchedIgnoredRec = {
@@ -126,12 +144,6 @@ export type AuditRec = {
   new_value: unknown
 }
 
-/** One referral visit — mirrors a `visits` row that counts toward "Počet doporučení". */
-export type ReferralVisitRec = {
-  period: string
-  master_id: string
-}
-
 export type DoctorPayoutRec = {
   period: string
   master_id: string
@@ -150,6 +162,89 @@ export type AppUserRec = {
   invited_by: string | null
 }
 
+/* ------------------------------ specializations ---------------------------- */
+
+export type SpecializationRec = {
+  id: string
+  name: string
+  active: boolean
+}
+
+export type StaffSpecializationRec = {
+  master_id: string
+  specialization_id: string
+  is_primary: boolean
+}
+
+export type BandColorValue = "red" | "yellow" | "green" | "blue" | "grey"
+
+export type SpecializationBandRec = {
+  specialization_id: string
+  min_pct: number
+  color: BandColorValue
+}
+
+/* ---------------------------------- KPI ------------------------------------ */
+
+export type KpiMetricValue = "showup" | "avg_check" | "activity"
+
+export type KpiProfileRec = {
+  id: string
+  name: string
+  active: boolean
+  max_bonus: number
+  max_penalty: number
+  min_sample: number
+}
+
+export type KpiProfileBandRec = {
+  profile_id: string
+  metric: KpiMetricValue
+  min_value: number
+  max_value: number | null
+  points: number
+}
+
+/** A doctor's KPI-profile assignment history — one open row (valid_to = null) at a time. */
+export type DoctorKpiProfileRec = {
+  id: string
+  master_id: string
+  profile_id: string | null
+  valid_from: string
+  valid_to: string | null
+}
+
+/** A doctor's computed KPI result for one month — produced by the (fictional) external worker. */
+export type DoctorKpiMonthlyRec = {
+  master_id: string
+  period: string
+  profile_id: string | null
+  showup_pct: number | null
+  avg_check: number | null
+  activity_pct: number | null
+  planned_count: number
+  showup_points: number
+  avg_check_points: number
+  activity_points: number
+  k_raw: number
+  k_kpi: number
+  sample_ok: boolean
+  commission_source: number
+  commission_performer: number
+  final_commission: number
+}
+
+/* ------------------------------ doctor rates -------------------------------- */
+
+export type DoctorBucketRateRec = {
+  master_id: string
+  bucket: string
+  enabled: boolean
+  rate: number | null
+  valid_from: string
+  valid_to: string | null
+}
+
 export type DemoState = {
   periods: PeriodRec[]
   staff: StaffRec[]
@@ -163,10 +258,17 @@ export type DemoState = {
   commissionLines: CommissionLineRec[]
   commissionMonthly: CommissionMonthlyRec[]
   doctorMonthlyStats: DoctorMonthlyStatsRec[]
-  referralVisits: ReferralVisitRec[]
   doctorPayouts: DoctorPayoutRec[]
   unmatchedIgnored: UnmatchedIgnoredRec[]
   users: AppUserRec[]
+  specializations: SpecializationRec[]
+  staffSpecializations: StaffSpecializationRec[]
+  specializationBands: SpecializationBandRec[]
+  kpiProfiles: KpiProfileRec[]
+  kpiProfileBands: KpiProfileBandRec[]
+  doctorKpiProfiles: DoctorKpiProfileRec[]
+  doctorKpiMonthly: DoctorKpiMonthlyRec[]
+  doctorBucketRates: DoctorBucketRateRec[]
   auditLog: AuditRec[]
   nextAuditId: number
   nextRowId: number

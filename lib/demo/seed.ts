@@ -5,20 +5,29 @@
 import type {
   AppUserRec,
   AuditRec,
+  BandColorValue,
   BucketRateRec,
   BucketRec,
   CategoryMappingRec,
   CommissionLineRec,
   CommissionMonthlyRec,
   DemoState,
+  DoctorBucketRateRec,
+  DoctorKpiMonthlyRec,
+  DoctorKpiProfileRec,
   DoctorMonthlyStatsRec,
   DoctorPayoutRec,
-  ReferralVisitRec,
+  KpiMetricValue,
+  KpiProfileBandRec,
+  KpiProfileRec,
   ServiceCatalogRec,
   ServiceExclusionRec,
   ServiceMappingRec,
   SourceRec,
+  SpecializationBandRec,
+  SpecializationRec,
   StaffRec,
+  StaffSpecializationRec,
 } from "./types"
 
 /* ------------------------------- primitives ------------------------------- */
@@ -242,6 +251,168 @@ const UNFLAGGED: [string, string, string | null][] = [
   ["132", "MUDr. Adam Šťastný", "nastoupil 04/2026 – ověřit"],
 ]
 
+/* ---------------------------- specializations ------------------------------ */
+
+/** [id, name, active] — one per doctor specialty note, plus two extras for variety. */
+const SPECIALIZATIONS: [string, string, boolean][] = [
+  ["1", "Interní lékařství", true],
+  ["2", "Gynekologie", true],
+  ["3", "Kardiologie", true],
+  ["4", "Dermatologie", true],
+  ["5", "Urologie", true],
+  ["6", "Endokrinologie", true],
+  ["7", "Neurologie", true],
+  ["8", "Pediatrie", true],
+  ["9", "Gastroenterologie", true],
+  ["10", "Revmatologie", true],
+  ["11", "Chirurgie", true],
+  ["12", "Nefrologie", true],
+  ["13", "Proktologie", true],
+  ["14", "Trichologie", true],
+  ["15", "Estetická medicína", true],
+  ["16", "Sportovní medicína", false],
+]
+
+/** staff note -> specialization id, for the 1:1 primary assignment. */
+const SPECIALIZATION_BY_NOTE: Record<string, string> = {
+  internista: "1",
+  gynekoložka: "2",
+  kardiolog: "3",
+  dermatoložka: "4",
+  urolog: "5",
+  endokrinoložka: "6",
+  neurolog: "7",
+  pediatrička: "8",
+  gastroenterolog: "9",
+  revmatoložka: "10",
+  chirurg: "11",
+  nefroložka: "12",
+  proktolog: "13",
+  tricholožka: "14",
+}
+
+/** master_id -> extra (non-primary) specialization ids, for demo variety. */
+const ADDITIONAL_SPECIALIZATIONS: Record<string, string[]> = {
+  "111": ["15"], // Krejčí: Chirurgie + Estetická medicína
+  "114": ["15"], // Malá: Trichologie + Estetická medicína
+  "104": ["16"], // Černá: Dermatologie + Sportovní medicína (inactive)
+}
+
+/** specialization id -> custom coefficient bands (colored thresholds). Others use the shared defaults. */
+const SPECIALIZATION_BANDS: Record<string, [number, BandColorValue][]> = {
+  "2": [
+    [0, "red"],
+    [15, "yellow"],
+    [40, "green"],
+    [70, "blue"],
+  ], // Gynekologie — stricter thresholds
+  "14": [
+    [0, "red"],
+    [25, "yellow"],
+    [55, "green"],
+  ], // Trichologie — no "blue" tier
+}
+
+/* --------------------------------- KPI profiles ----------------------------- */
+
+type KpiBandTuple = [number | "", number | "", number] // [min, max, points] — "" means unset
+
+const KPI_PROFILE_DEFS: {
+  id: string
+  name: string
+  active: boolean
+  maxBonus: number
+  maxPenalty: number
+  minSample: number
+  bands: Record<KpiMetricValue, KpiBandTuple[]>
+}[] = [
+  {
+    id: "1",
+    name: "Standardní KPI",
+    active: true,
+    maxBonus: 0.2,
+    maxPenalty: 0.3,
+    minSample: 10,
+    bands: {
+      showup: [
+        [0, 55, -0.15],
+        [55, 70, -0.1],
+        [70, 85, 0],
+        [85, "", 0.1],
+      ],
+      avg_check: [
+        [0, 600, -0.1],
+        [600, 900, 0],
+        [900, "", 0.05],
+      ],
+      activity: [
+        [0, 30, -0.05],
+        [30, 60, 0],
+        [60, "", 0.05],
+      ],
+    },
+  },
+  {
+    id: "2",
+    name: "Rozšířené KPI",
+    active: true,
+    maxBonus: 0.25,
+    maxPenalty: 0.2,
+    minSample: 15,
+    bands: {
+      showup: [
+        [0, 60, -0.1],
+        [60, 80, 0],
+        [80, "", 0.15],
+      ],
+      avg_check: [
+        [0, 700, -0.05],
+        [700, 1100, 0],
+        [1100, "", 0.1],
+      ],
+      activity: [
+        [0, 35, -0.05],
+        [35, 65, 0.02],
+        [65, "", 0.08],
+      ],
+    },
+  },
+  {
+    id: "3",
+    name: "Zkušební KPI (neaktivní)",
+    active: false,
+    maxBonus: 0.15,
+    maxPenalty: 0.15,
+    minSample: 8,
+    bands: {
+      showup: [
+        [0, 65, -0.08],
+        [65, "", 0.08],
+      ],
+      avg_check: [[0, "", 0]],
+      activity: [[0, "", 0]],
+    },
+  },
+]
+
+/** master_id -> [profileId, validFromPeriod]. Everyone else stays "Bez KPI". */
+const KPI_ASSIGNMENTS: Record<string, [string, string]> = {
+  "101": ["1", "2025-12-01"], // Novák
+  "106": ["1", "2025-12-01"], // Kučerová
+  "108": ["1", "2026-02-01"], // Horáková
+  "110": ["2", "2026-01-01"], // Pospíšilová
+  "111": ["2", "2025-12-01"], // Krejčí
+  "113": ["1", "2026-03-01"], // Beneš
+}
+
+/* ------------------------------ doctor rate overrides ----------------------- */
+
+/** master_id -> [bucket, ratePercent][] personal overrides, active from RULES_FROM. */
+const DOCTOR_RATE_OVERRIDES: Record<string, [string, number][]> = {
+  "101": [["uzd", 12]], // Novák: boosted ultrasound rate
+  "106": [["medlab", 9]], // Kučerová: boosted lab rate
+}
+
 /* --------------------------------- sources -------------------------------- */
 
 const UNMAPPED_SOURCES: [string, string, string | null][] = [
@@ -292,6 +463,13 @@ function rateAt(bucket: string, period: string): number {
     if (period >= from && (to === null || period < to)) return rate
   }
   return versions.length > 0 ? versions[versions.length - 1][0] : 0
+}
+
+/** General rule rate, unless this doctor has a personal override on that bucket. */
+function doctorRateAt(masterId: string, bucket: string, period: string): number {
+  const override = DOCTOR_RATE_OVERRIDES[masterId]?.find(([b]) => b === bucket)
+  if (override && period >= RULES_FROM) return override[1] / 100
+  return rateAt(bucket, period)
 }
 
 const COMMISSIONABLE = SERVICES.filter(([, , cat]) => {
@@ -445,7 +623,8 @@ export function buildDemoState(): DemoState {
 
   const commissionLines: CommissionLineRec[] = []
   const doctorMonthlyStats: DoctorMonthlyStatsRec[] = []
-  const referralVisits: ReferralVisitRec[] = []
+  /** `${period}|${masterId}` -> commission split by beneficiary, for the KPI worker below. */
+  const commissionSplit = new Map<string, { source: number; performer: number }>()
   let visitSeq = 40000
 
   // A doctor's referral volume is a stable trait, not re-rolled every month —
@@ -465,12 +644,16 @@ export function buildDemoState(): DemoState {
         Math.round(baseVolume[doctorIndex] * growth * (0.85 + rand() * 0.3)),
       )
 
+      let sourceCommission = 0
+      let performerCommission = 0
+
       for (let i = 0; i < lineCount; i++) {
         const [serviceId, name, categoryId, price] = COMMISSIONABLE[Math.floor(rand() * COMMISSIONABLE.length)]
         const bucket = serviceId === EKG_SERVICE_ID ? "ekg" : bucketOfCategory(categoryId)!
         const qty = rand() < 0.82 ? 1 : rand() < 0.7 ? 2 : 3
         const base = price * qty
-        const rate = rateAt(bucket, period)
+        const rate = doctorRateAt(masterId, bucket, period)
+        const commission = round2(base * rate)
         commissionLines.push({
           id: nextId(),
           period,
@@ -483,11 +666,13 @@ export function buildDemoState(): DemoState {
           bucket,
           base_amount: base,
           rate,
-          commission: round2(base * rate),
+          commission,
           status: "accrued",
           reason: null,
         })
-        referralVisits.push({ period, master_id: masterId })
+        const bucketDef = BUCKETS.find(([b]) => b === bucket)
+        if (bucketDef?.[2] === "performer") performerCommission += commission
+        else sourceCommission += commission
       }
 
       // A few deliberately non-commission lines, so the doctor card shows the
@@ -514,13 +699,55 @@ export function buildDemoState(): DemoState {
         })
       }
 
-      // Coefficient = referrals ÷ patients served; occasionally above 100%.
-      const patients = Math.max(1, Math.round(lineCount * (0.7 + rand() * 0.75)))
+      // --- rich monthly activity snapshot, as the (fictional) worker would produce it ---
+
+      const referrals = lineCount
+      const referredPatients = Math.max(1, Math.round(referrals * (0.75 + rand() * 0.2)))
+      const referralsCommissionable = referrals
+
+      // Coefficient = referred patients ÷ patients served; occasionally above 100%.
+      const patientsServed = Math.max(1, Math.round(referrals * (0.7 + rand() * 0.75)))
+      const visitsPerformed = Math.max(patientsServed, Math.round(patientsServed * (1.05 + rand() * 0.25)))
+      const selfRecords = Math.round(visitsPerformed * (0.08 + rand() * 0.2))
+
+      const showupPct = 0.55 + rand() * 0.4
+      const showupDoneCount = Math.round(referrals * showupPct)
+      const showupCancelCount = Math.max(0, referrals - showupDoneCount)
+      const referredBaseForPeriod = round2(sourceCommission > 0 ? sourceCommission / doctorRateAt(masterId, "consult", period) : 0)
+      const showupDoneSum = referredBaseForPeriod
+      const showupCancelSum = round2(showupCancelCount * (referredBaseForPeriod / Math.max(showupDoneCount, 1)))
+
+      const consultTotal = patientsServed
+      const offlineShare = 0.6 + rand() * 0.2
+      const primaryShare = 0.35 + rand() * 0.2
+      const consultOfflinePrimary = Math.round(consultTotal * offlineShare * primaryShare)
+      const consultOfflineRepeat = Math.round(consultTotal * offlineShare * (1 - primaryShare))
+      const consultOnlinePrimary = Math.round(consultTotal * (1 - offlineShare) * primaryShare)
+      const consultOnlineRepeat = Math.max(
+        0,
+        consultTotal - consultOfflinePrimary - consultOfflineRepeat - consultOnlinePrimary,
+      )
+
       doctorMonthlyStats.push({
         period,
         master_id: masterId,
-        patients_served: patients,
+        patients_served: patientsServed,
+        referrals,
+        referred_patients: referredPatients,
+        referrals_commissionable: referralsCommissionable,
+        visits_performed: visitsPerformed,
+        self_records: selfRecords,
+        showup_done_count: showupDoneCount,
+        showup_done_sum: showupDoneSum,
+        showup_cancel_count: showupCancelCount,
+        showup_cancel_sum: showupCancelSum,
+        consult_offline_primary: consultOfflinePrimary,
+        consult_offline_repeat: consultOfflineRepeat,
+        consult_online_primary: consultOnlinePrimary,
+        consult_online_repeat: consultOnlineRepeat,
       })
+
+      commissionSplit.set(`${period}|${masterId}`, { source: sourceCommission, performer: performerCommission })
     })
   })
 
@@ -674,6 +901,142 @@ export function buildDemoState(): DemoState {
     }
   }
 
+  /* --------------------------- specializations ---------------------------- */
+
+  const specializations: SpecializationRec[] = SPECIALIZATIONS.map(([id, name, active]) => ({
+    id,
+    name,
+    active,
+  }))
+
+  const staffSpecializations: StaffSpecializationRec[] = []
+  for (const [masterId, , note] of DOCTORS) {
+    const primaryId = SPECIALIZATION_BY_NOTE[note]
+    if (primaryId) {
+      staffSpecializations.push({ master_id: masterId, specialization_id: primaryId, is_primary: true })
+    }
+    for (const extraId of ADDITIONAL_SPECIALIZATIONS[masterId] ?? []) {
+      staffSpecializations.push({ master_id: masterId, specialization_id: extraId, is_primary: false })
+    }
+  }
+
+  const specializationBands: SpecializationBandRec[] = []
+  for (const [specId, bands] of Object.entries(SPECIALIZATION_BANDS)) {
+    for (const [min_pct, color] of bands) {
+      specializationBands.push({ specialization_id: specId, min_pct, color })
+    }
+  }
+
+  /* --------------------------------- KPI ----------------------------------- */
+
+  const kpiProfiles: KpiProfileRec[] = KPI_PROFILE_DEFS.map((p) => ({
+    id: p.id,
+    name: p.name,
+    active: p.active,
+    max_bonus: p.maxBonus,
+    max_penalty: p.maxPenalty,
+    min_sample: p.minSample,
+  }))
+
+  const kpiProfileBands: KpiProfileBandRec[] = []
+  for (const profile of KPI_PROFILE_DEFS) {
+    for (const metric of Object.keys(profile.bands) as KpiMetricValue[]) {
+      for (const [min, max, points] of profile.bands[metric]) {
+        if (min === "") continue
+        kpiProfileBands.push({
+          profile_id: profile.id,
+          metric,
+          min_value: min,
+          max_value: max === "" ? null : max,
+          points,
+        })
+      }
+    }
+  }
+
+  /** Points awarded by the first band whose [min, max) contains `value`. */
+  function bandPoints(value: number, bands: KpiBandTuple[]): number {
+    for (const [min, max, points] of bands) {
+      if (min === "") continue
+      if (value >= min && (max === "" || value < max)) return points
+    }
+    return 0
+  }
+
+  const doctorKpiProfiles: DoctorKpiProfileRec[] = []
+  const doctorKpiMonthly: DoctorKpiMonthlyRec[] = []
+
+  for (const [masterId, [profileId, validFrom]] of Object.entries(KPI_ASSIGNMENTS)) {
+    doctorKpiProfiles.push({
+      id: nextId(),
+      master_id: masterId,
+      profile_id: profileId,
+      valid_from: validFrom,
+      valid_to: null,
+    })
+
+    const profile = KPI_PROFILE_DEFS.find((p) => p.id === profileId)!
+
+    for (const period of PERIODS) {
+      if (period < validFrom) continue
+      const stats = doctorMonthlyStats.find((s) => s.period === period && s.master_id === masterId)
+      const split = commissionSplit.get(`${period}|${masterId}`)
+      if (!stats || !split) continue
+
+      const showupTotalSum = stats.showup_done_sum + stats.showup_cancel_sum
+      const showupPct = showupTotalSum > 0 ? (stats.showup_done_sum / showupTotalSum) * 100 : null
+      const avgCheck = stats.referrals_commissionable > 0 ? split.source / stats.referrals_commissionable : null
+      const activityPct = stats.patients_served > 0 ? (stats.referred_patients / stats.patients_served) * 100 : null
+
+      const showupPoints = showupPct != null ? bandPoints(showupPct, profile.bands.showup) : 0
+      const avgCheckPoints = avgCheck != null ? bandPoints(avgCheck, profile.bands.avg_check) : 0
+      const activityPoints = activityPct != null ? bandPoints(activityPct, profile.bands.activity) : 0
+
+      const kRaw = round2(1 + showupPoints + avgCheckPoints + activityPoints)
+      const kKpi = round2(Math.min(1 + profile.maxBonus, Math.max(1 - profile.maxPenalty, kRaw)))
+      const sampleOk = stats.referrals_commissionable >= profile.minSample
+
+      const finalCommission = sampleOk
+        ? round2(split.source * kKpi + split.performer)
+        : round2(split.source * 0.5 + split.performer)
+
+      doctorKpiMonthly.push({
+        master_id: masterId,
+        period,
+        profile_id: profileId,
+        showup_pct: showupPct,
+        avg_check: avgCheck,
+        activity_pct: activityPct,
+        planned_count: stats.referrals_commissionable,
+        showup_points: showupPoints,
+        avg_check_points: avgCheckPoints,
+        activity_points: activityPoints,
+        k_raw: kRaw,
+        k_kpi: sampleOk ? kKpi : 0.5,
+        sample_ok: sampleOk,
+        commission_source: split.source,
+        commission_performer: split.performer,
+        final_commission: finalCommission,
+      })
+    }
+  }
+
+  /* --------------------------- doctor rate overrides ------------------------ */
+
+  const doctorBucketRates: DoctorBucketRateRec[] = []
+  for (const [masterId, overrides] of Object.entries(DOCTOR_RATE_OVERRIDES)) {
+    for (const [bucket, ratePercent] of overrides) {
+      doctorBucketRates.push({
+        master_id: masterId,
+        bucket,
+        enabled: true,
+        rate: Math.round((ratePercent / 100) * 10000) / 10000,
+        valid_from: RULES_FROM,
+        valid_to: null,
+      })
+    }
+  }
+
   /* -------------------------------- users --------------------------------- */
 
   const users: AppUserRec[] = [
@@ -716,7 +1079,6 @@ export function buildDemoState(): DemoState {
     commissionLines,
     commissionMonthly,
     doctorMonthlyStats,
-    referralVisits,
     doctorPayouts,
     unmatchedIgnored: IGNORED_ITEMS.map(([itemId, , reason, at]) => ({
       item_id: itemId,
@@ -725,6 +1087,14 @@ export function buildDemoState(): DemoState {
       at,
     })),
     users,
+    specializations,
+    staffSpecializations,
+    specializationBands,
+    kpiProfiles,
+    kpiProfileBands,
+    doctorKpiProfiles,
+    doctorKpiMonthly,
+    doctorBucketRates,
     auditLog: [],
     nextAuditId: 1,
     nextRowId: rowId,
@@ -794,6 +1164,12 @@ function buildAuditLog(state: DemoState): AuditRec[] {
   push("2025-11-05T11:09:00.000Z", "spravce@demo.clinic", "category.map", "category_mapping", "1089", null, { bucket: null, valid_from: "2025-11-01" })
   push("2025-11-12T14:41:00.000Z", "hlavni.lekar@demo.clinic", "staff.flag", "staff", "111", { is_doctor: null }, { is_doctor: true })
   push("2025-11-12T14:42:00.000Z", "hlavni.lekar@demo.clinic", "staff.flag", "staff", "20", { is_doctor: null }, { is_doctor: false })
+  push("2025-11-18T10:05:00.000Z", "spravce@demo.clinic", "specialization.create", "specializations", "14", null, { name: "Trichologie" })
+  push("2025-11-18T10:07:00.000Z", "spravce@demo.clinic", "specialization.create", "specializations", "15", null, { name: "Estetická medicína" })
+  push("2025-11-18T10:12:00.000Z", "spravce@demo.clinic", "staff.specializations", "staff_specializations", "111", { primary: null, additional: [] }, { primary: "11", additional: ["15"] })
+  push("2025-11-25T13:40:00.000Z", "spravce@demo.clinic", "kpi_profile.create", "kpi_profiles", "1", null, { name: "Standardní KPI", maxBonus: 0.2, maxPenalty: 0.3, minSample: 10 })
+  push("2025-12-01T09:00:00.000Z", "spravce@demo.clinic", "doctor.kpi_profile", "doctor_kpi_profiles", "101", { profile_id: null, valid_from: null }, { profile_id: "1", valid_from: "2025-12-01" })
+  push("2025-12-02T09:30:00.000Z", "spravce@demo.clinic", "doctor_rate.update", "doctor_bucket_rates", "101:uzd", { enabled: true, rate: null }, { enabled: true, rate: 0.12 })
   push("2025-12-05T08:12:00.000Z", "hlavni.ucetni@demo.clinic", "period.freeze", "periods", "2025-11-01", { status: "draft", total_commission: null }, { status: "frozen", frozen_by: "hlavni.ucetni@demo.clinic" })
   push("2025-12-09T10:30:00.000Z", "spravce@demo.clinic", "service_exclusion.create", "service_exclusions", "303", null, { reason: "zapůjčení přístroje – bez provize", valid_from: "2025-12-01" })
   push("2026-01-05T08:12:00.000Z", "hlavni.ucetni@demo.clinic", "period.freeze", "periods", "2025-12-01", { status: "draft" }, { status: "frozen", frozen_by: "hlavni.ucetni@demo.clinic" })

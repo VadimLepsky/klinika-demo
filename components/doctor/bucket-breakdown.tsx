@@ -19,6 +19,11 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty"
+import {
+  Tooltip as InfoTooltip,
+  TooltipContent as InfoTooltipContent,
+  TooltipTrigger as InfoTooltipTrigger,
+} from "@/components/ui/tooltip"
 import { formatCurrency, formatNumber, formatRate } from "@/lib/format"
 import { getCategoryColor, OTHER_COLOR } from "@/lib/category-colors"
 import type { BucketBreakdownRow } from "@/lib/queries/doctor"
@@ -69,6 +74,7 @@ export function BucketBreakdown({ rows }: { rows: BucketBreakdownRow[]; month: s
       qty: small.reduce((sum, row) => sum + row.qty, 0),
       base: small.reduce((sum, row) => sum + row.base, 0),
       rate: 0,
+      general_rate: null,
       commission: small.reduce((sum, row) => sum + row.commission, 0),
       sourceLabels: small.map((row) => row.label),
     }
@@ -141,6 +147,8 @@ export function BucketBreakdown({ rows }: { rows: BucketBreakdownRow[]; month: s
                     const isOther = row.bucket === OTHER_BUCKET
                     const color = isOther ? OTHER_COLOR : getCategoryColor(row.bucket)
                     const highlighted = activeBucket === row.bucket
+                    const isPersonal =
+                      !isOther && row.general_rate != null && Math.abs(row.rate - row.general_rate) > 1e-9
                     return (
                       <TableRow
                         key={row.bucket}
@@ -154,7 +162,27 @@ export function BucketBreakdown({ rows }: { rows: BucketBreakdownRow[]; month: s
                         </TableCell>
                         <TableCell className="whitespace-nowrap text-right tabular-nums">{formatNumber(row.qty)}</TableCell>
                         <TableCell className="whitespace-nowrap text-right tabular-nums">
-                          {isOther ? "—" : formatRate(row.rate)}
+                          {isOther ? (
+                            "—"
+                          ) : isPersonal ? (
+                            <span className="inline-flex flex-col items-end leading-tight">
+                              <span>{formatRate(row.rate)}</span>
+                              <InfoTooltip>
+                                <InfoTooltipTrigger
+                                  render={
+                                    <span className="cursor-default text-[10px] font-medium text-primary">
+                                      osobní
+                                    </span>
+                                  }
+                                />
+                                <InfoTooltipContent>
+                                  Obecná sazba: {formatRate(row.general_rate)}
+                                </InfoTooltipContent>
+                              </InfoTooltip>
+                            </span>
+                          ) : (
+                            formatRate(row.rate)
+                          )}
                         </TableCell>
                         <TableCell className="whitespace-nowrap text-right font-medium tabular-nums">{formatCurrency(row.commission)}</TableCell>
                       </TableRow>
