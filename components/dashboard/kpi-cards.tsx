@@ -58,14 +58,14 @@ export function KpiCards({
       delta: <Delta current={kpis.totalCommission} previous={prev?.totalCommission ?? null} />,
     },
     {
-      label: "Doporučeno pacientů",
+      label: "Odeslaní pacienti",
       value: formatNumber(kpis.totalReferredPatients),
       icon: Send,
       secondary: `koeficient ${formatCoefficient(kpis.totalReferredPatients, kpis.totalPatientsServed)}`,
       delta: <Delta current={kpis.totalReferredPatients} previous={prev?.totalReferredPatients ?? null} />,
     },
     {
-      label: "Objem doporučených",
+      label: "Objem žádanek (Kč)",
       value: formatCurrencyRounded(kpis.totalBase),
       icon: Wallet,
       delta: <Delta current={kpis.totalBase} previous={prev?.totalBase ?? null} />,

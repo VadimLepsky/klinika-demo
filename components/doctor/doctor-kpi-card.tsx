@@ -29,7 +29,7 @@ export function DoctorKpiCard({ kpi }: { kpi: DoctorKpiMonthly | null }) {
           <p className="text-sm text-muted-foreground">Bez KPI — koeficient 1,00.</p>
         ) : !kpi.sample_ok ? (
           <p className="text-sm text-muted-foreground">
-            Malý vzorek: {kpi.planned_count} plánovaných doporučení (min. {kpi.profile_min_sample ?? "—"}) —
+            Malý vzorek: počet žádanek {kpi.planned_count} (min. {kpi.profile_min_sample ?? "—"}) —
             koeficient {kpi.k_kpi.toFixed(2)}.
           </p>
         ) : (

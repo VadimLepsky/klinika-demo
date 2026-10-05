@@ -214,7 +214,7 @@ const SERVICES: [string, string, string, number][] = [
   ["310", "Komplexní gynekologické vyšetření", "889", 1480],
   ["311", "Kolposkopie", "889", 900],
   ["308", "Screening 40+ – vstupní konzultace", "1081", 0],
-  ["309", "Deklarace – doporučení / recept / potvrzení", "772", 0],
+  ["309", "Deklarace – žádanka / recept / potvrzení", "772", 0],
 ]
 
 /** Standalone service override: EKG is billed from its own bucket. */
@@ -838,7 +838,7 @@ export function buildDemoState(): DemoState {
         rate: null,
         commission: 0,
         status: "pending_review",
-        reason: "zdroj doporučení není přiřazen k lékaři",
+        reason: "zdroj pacientů není přiřazen k lékaři",
       })
     }
   })

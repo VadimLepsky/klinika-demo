@@ -66,7 +66,7 @@ export function BucketsTable({
                     </span>
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-muted-foreground">
-                    {b.beneficiary === "source" ? "Doporučující" : "Vykonavatel"}
+                    {b.beneficiary === "source" ? "Odesílající" : "Provádějící"}
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-right">
                     {b.current_rate != null ? (

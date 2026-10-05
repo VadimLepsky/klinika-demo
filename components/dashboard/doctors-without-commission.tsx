@@ -50,7 +50,7 @@ export function DoctorsWithoutCommission({
               <TableRow>
                 <TableHead>Lékař</TableHead>
                 <TableHead className="w-[110px] text-right">Pacientů</TableHead>
-                <TableHead className="w-[140px] text-right">Doporučeno pacientů</TableHead>
+                <TableHead className="w-[140px] text-right">Odeslaní pacienti</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

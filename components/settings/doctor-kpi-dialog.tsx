@@ -119,7 +119,7 @@ export function DoctorKpiDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>KPI: {doctorName}</DialogTitle>
-          <DialogDescription>Upravuje provizi za doporučení koeficientem K od zvoleného měsíce.</DialogDescription>
+          <DialogDescription>Upravuje provizi za žádanky koeficientem K od zvoleného měsíce.</DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col gap-4">

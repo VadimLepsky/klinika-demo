@@ -53,8 +53,8 @@ export function DoctorsTable({
           <TableHeader>
             <TableRow className="bg-secondary/60 hover:bg-secondary/60">
               <TableHead className="pl-6">Lékař</TableHead>
-              <TableHead className="w-[150px] text-right">Doporučeno pacientů</TableHead>
-              <TableHead className="w-[160px] text-right">Objem doporučených, Kč</TableHead>
+              <TableHead className="w-[150px] text-right">Odeslaní pacienti</TableHead>
+              <TableHead className="w-[160px] text-right">Objem žádanek, Kč</TableHead>
               <TableHead className="w-[130px] text-right">Provize, Kč</TableHead>
               <TableHead className="w-[80px] text-right">K</TableHead>
               <TableHead className="w-[140px] text-right">K výplatě, Kč</TableHead>

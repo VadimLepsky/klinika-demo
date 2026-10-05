@@ -26,15 +26,15 @@ import { cn } from "@/lib/utils"
 import type { DoctorMonthPoint, DoctorMonthStats } from "@/lib/queries/doctor"
 
 const referralsConfig: ChartConfig = {
-  referrals: { label: "Doporučeno pacientů", color: SERIES_COLORS.referrals },
-  referred_base: { label: "Objem doporučených", color: SERIES_COLORS.referredSum },
+  referrals: { label: "Odeslaní pacienti", color: SERIES_COLORS.referrals },
+  referred_base: { label: "Objem žádanek (Kč)", color: SERIES_COLORS.referredSum },
 }
 const commissionConfig: ChartConfig = {
   commission: { label: "Provize", color: SERIES_COLORS.commission },
 }
 const patientsConfig: ChartConfig = {
   patients_served: { label: "Ošetřeno pacientů", color: SERIES_COLORS.patients },
-  coefficient: { label: "Koeficient doporučení", color: SERIES_COLORS.coefficient },
+  coefficient: { label: "Koeficient žádanek", color: SERIES_COLORS.coefficient },
 }
 
 const percentFmt = new Intl.NumberFormat("cs-CZ", { minimumFractionDigits: 1, maximumFractionDigits: 1 })
@@ -156,7 +156,7 @@ export function DoctorCharts({
     <div className="grid grid-cols-1 gap-4 min-[1100px]:grid-cols-2">
       <Card className="flex h-[380px] flex-col">
         <CardHeader>
-          <CardTitle>Doporučení po měsících</CardTitle>
+          <CardTitle>Odeslaní pacienti a objem žádanek po měsících</CardTitle>
         </CardHeader>
         <CardContent className="flex-1">
           <ChartContainer config={referralsConfig} className="aspect-auto h-full w-full">
@@ -189,7 +189,7 @@ export function DoctorCharts({
                   <ChartTooltipContent
                     formatter={(value, name, item) => {
                       const key = String(item.dataKey)
-                      const label = key === "referred_base" ? "Objem doporučených" : "Doporučeno pacientů"
+                      const label = key === "referred_base" ? "Objem žádanek (Kč)" : "Odeslaní pacienti"
                       return (
                         <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
                           <span className="text-muted-foreground">{label}</span>
@@ -205,7 +205,7 @@ export function DoctorCharts({
                 }
               />
               <Legend
-                formatter={(value) => (value === "referrals" ? "Doporučeno pacientů" : "Objem doporučených")}
+                formatter={(value) => (value === "referrals" ? "Odeslaní pacienti" : "Objem žádanek (Kč)")}
                 onClick={(entry) => {
                   const key = String(entry.dataKey)
                   setHiddenSeries((current) => {
@@ -302,7 +302,7 @@ export function DoctorCharts({
                   <ChartTooltipContent
                     formatter={(value, name, item) => {
                       const key = String(item.dataKey)
-                      const label = key === "coefficient" ? "Koeficient doporučení" : "Ošetřeno pacientů"
+                      const label = key === "coefficient" ? "Koeficient žádanek" : "Ošetřeno pacientů"
                       return (
                         <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
                           <span className="text-muted-foreground">{label}</span>
@@ -316,7 +316,7 @@ export function DoctorCharts({
                 }
               />
               <Legend
-                formatter={(value) => (value === "patients_served" ? "Ošetřeno pacientů" : "Koeficient doporučení")}
+                formatter={(value) => (value === "patients_served" ? "Ošetřeno pacientů" : "Koeficient žádanek")}
                 onClick={(entry) => {
                   const key = String(entry.dataKey)
                   setHiddenSeries((current) => {
@@ -360,13 +360,13 @@ export function DoctorCharts({
         <CardContent className="flex-1">
           <div className="grid h-full grid-cols-3 grid-rows-2 gap-4">
             <MetricTile
-              label="Doporučeno pacientů"
+              label="Odeslaní pacienti"
               value={stats ? formatNumber(stats.referred_patients) : "—"}
               secondary={
                 stats ? (
                   <>
                     <span>{`koeficient ${formatCoefficient(stats.referred_patients, stats.patients_served)}`}</span>
-                    <span>{`celkem doporučení: ${formatNumber(stats.referrals)}`}</span>
+                    <span>{`Žádanky celkem: ${formatNumber(stats.referrals)}`}</span>
                   </>
                 ) : undefined
               }
@@ -380,7 +380,7 @@ export function DoctorCharts({
             />
             <ShowupTile stats={stats} />
             <MetricTile
-              label="Prům. účet doporučení"
+              label="Prům. hodnota žádanky"
               value={stats && avgCheck != null ? formatCurrencyRounded(avgCheck) : "—"}
               gapStyle="18px"
             />

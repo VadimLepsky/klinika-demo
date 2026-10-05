@@ -13,7 +13,7 @@ export default async function SourcesPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Zdroje doporučení</CardTitle>
+        <CardTitle>Zdroje pacientů</CardTitle>
         <CardDescription>
           Vazba zdrojů na lékaře. Zdroje bez provize se do výpočtu nezapočítávají.
         </CardDescription>

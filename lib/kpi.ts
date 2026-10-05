@@ -15,9 +15,9 @@ export const KPI_METRIC_LABELS: Record<KpiMetric, string> = {
 }
 
 export const KPI_METRIC_HINTS: Record<KpiMetric, string> = {
-  showup: "podíl uskutečněných doporučení z plánovaných (podle částky)",
-  avg_check: "provizní základ ÷ doporučení s provizí",
-  activity: "pacientů doporučeno ÷ pacientů lékaře za měsíc",
+  showup: "podíl uskutečněných žádanek z plánovaných (podle částky)",
+  avg_check: "provizní základ ÷ žádanek s provizí",
+  activity: "odeslaných pacientů ÷ pacientů lékaře za měsíc",
 }
 
 /** A single band read from `kpi_profile_bands`: applies from `min_value` up to (excl.) `max_value`, or unbounded above if `max_value` is null. */

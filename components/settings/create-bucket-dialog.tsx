@@ -27,7 +27,7 @@ import {
 import { createBucket } from "@/app/(app)/settings/actions"
 import { nextMonthValue, monthInputToDate, slugify } from "@/lib/format"
 
-const BENEFICIARY_ITEMS = { source: "Doporučující", performer: "Vykonavatel" }
+const BENEFICIARY_ITEMS = { source: "Odesílající", performer: "Provádějící" }
 
 export function CreateBucketDialog({
   trigger,
@@ -135,8 +135,8 @@ export function CreateBucketDialog({
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  <SelectItem value="source">Doporučující</SelectItem>
-                  <SelectItem value="performer">Vykonavatel</SelectItem>
+                  <SelectItem value="source">Odesílající</SelectItem>
+                  <SelectItem value="performer">Provádějící</SelectItem>
                 </SelectGroup>
               </SelectContent>
             </Select>

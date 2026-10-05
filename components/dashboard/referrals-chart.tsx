@@ -19,8 +19,8 @@ import { SERIES_COLORS } from "@/lib/category-colors"
 import type { MonthlySeriesPoint } from "@/lib/queries/dashboard"
 
 const chartConfig: ChartConfig = {
-  clinic: { label: "Doporučeno pacientů", color: SERIES_COLORS.referrals },
-  referred_base: { label: "Objem doporučených", color: SERIES_COLORS.referredSum },
+  clinic: { label: "Odeslaní pacienti", color: SERIES_COLORS.referrals },
+  referred_base: { label: "Objem žádanek (Kč)", color: SERIES_COLORS.referredSum },
 }
 
 export function ReferralsChart({ series }: { series: MonthlySeriesPoint[] }) {
@@ -38,7 +38,7 @@ export function ReferralsChart({ series }: { series: MonthlySeriesPoint[] }) {
   return (
     <Card>
       <CardHeader className="flex flex-col gap-1">
-        <CardTitle>Vývoj doporučení</CardTitle>
+        <CardTitle>Vývoj odeslaných pacientů a objemu žádanek</CardTitle>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="aspect-auto h-[300px] w-full">
@@ -71,7 +71,7 @@ export function ReferralsChart({ series }: { series: MonthlySeriesPoint[] }) {
                 <ChartTooltipContent
                   formatter={(value, _name, item) => {
                     const key = String(item.dataKey)
-                    const label = key === "referred_base" ? "Objem doporučených" : "Doporučeno pacientů"
+                    const label = key === "referred_base" ? "Objem žádanek (Kč)" : "Odeslaní pacienti"
                     return (
                       <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
                         <span className="text-muted-foreground">{label}</span>
@@ -87,7 +87,7 @@ export function ReferralsChart({ series }: { series: MonthlySeriesPoint[] }) {
               }
             />
             <Legend
-              formatter={(value) => (value === "clinic" ? "Doporučeno pacientů" : "Objem doporučených")}
+              formatter={(value) => (value === "clinic" ? "Odeslaní pacienti" : "Objem žádanek (Kč)")}
               onClick={(entry) => {
                 const key = String(entry.dataKey)
                 setHiddenSeries((current) => {

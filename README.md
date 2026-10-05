@@ -1,6 +1,6 @@
 # demo.clinic — Provize lékařů (UI demo)
 
-Interaktivní demo dashboardu pro výpočet a správu provizí lékařů za doporučení
+Interaktivní demo dashboardu pro výpočet a správu provizí lékařů za žádanky
 na placené služby kliniky. Slouží jako ukázka do případové studie — je to plná
 kopie produkčního rozhraní, ale bez napojení na CRM a databázi.
 
@@ -8,9 +8,9 @@ kopie produkčního rozhraní, ale bez napojení na CRM a databázi.
 
 | Sekce | Obsah |
 | --- | --- |
-| **Přehled** | KPI za měsíc (vč. koeficientu doporučení), vývoj doporučení a provizí, tabulka lékařů s výplatní checkboxem a koeficientem |
-| **Karta lékaře** | Grafy po měsících (doporučení, provize, pacienti a koeficient), koláčový rozpad provizí podle kategorií, jednotlivé položky s číslem návštěvy, checkbox „Vyplaceno“ |
-| **Vyžaduje pozornost** | Nepřiřazené zdroje doporučení (s návrhem lékaře), zaměstnanci bez označení, nové kategorie bez pravidla, nerozpoznané položky účtenek |
+| **Přehled** | KPI za měsíc (vč. koeficientu žádanek), vývoj počtu žádanek a provizí, tabulka lékařů s výplatní checkboxem a koeficientem |
+| **Karta lékaře** | Grafy po měsících (žádanky, provize, pacienti a koeficient), koláčový rozpad provizí podle kategorií, jednotlivé položky s číslem návštěvy, checkbox „Vyplaceno“ |
+| **Vyžaduje pozornost** | Nepřiřazené zdroje pacientů (s návrhem lékaře), zaměstnanci bez označení, nové kategorie bez pravidla, nerozpoznané položky účtenek |
 | **Období** | Uzávěrka měsíců — uzavřít lze jen měsíc bez nevyřešených položek |
 | **Nastavení** | Pravidla provizí s verzovanými sazbami a historií, kategorie z CRM, výjimky, zdroje, zaměstnanci, uživatelé (role, pozvánky) |
 | **Historie změn** | Auditní log každé změny pravidel — kdo, kdy, z čeho na co |

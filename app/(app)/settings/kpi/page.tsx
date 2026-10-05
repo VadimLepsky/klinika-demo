@@ -15,7 +15,7 @@ export default async function KpiProfilesPage() {
         <div className="flex flex-col gap-1">
           <CardTitle>KPI profily</CardTitle>
           <CardDescription>
-            Upravují provizi za doporučení koeficientem K na základě ukazatelů lékaře za měsíc.
+            Upravují provizi za žádanky koeficientem K na základě ukazatelů lékaře za měsíc.
           </CardDescription>
         </div>
         <CreateKpiProfileButton />

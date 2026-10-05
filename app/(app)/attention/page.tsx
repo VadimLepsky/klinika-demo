@@ -116,7 +116,7 @@ export default async function AttentionPage({
         id="sources"
         icon={Users}
         title="Nepřiřazené zdroje"
-        description="Zdroje doporučení bez vazby na lékaře (všechna období)."
+        description="Zdroje pacientů bez vazby na lékaře (všechna období)."
         count={sources.length}
       >
         {sources.length > 0 ? (

@@ -28,7 +28,7 @@ function normalizeName(raw: string): string | null {
 function validateLimits(maxBonus: number, maxPenalty: number, minSample: number): string | null {
   if (!Number.isFinite(maxBonus) || maxBonus < 0 || maxBonus > 1.5) return "Max. bonus musí být od 0 do 150 %."
   if (!Number.isFinite(maxPenalty) || maxPenalty < 0 || maxPenalty > 1) return "Max. postih musí být od 0 do 100 %."
-  if (!Number.isInteger(minSample) || minSample < 0) return "Minimální počet doporučení musí být celé číslo ≥ 0."
+  if (!Number.isInteger(minSample) || minSample < 0) return "Minimální počet žádanek musí být celé číslo ≥ 0."
   return null
 }
 

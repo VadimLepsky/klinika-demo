@@ -172,7 +172,7 @@ export function KpiProfileEditDialog({
       return
     }
     if (!Number.isInteger(minSampleNum) || minSampleNum < 0) {
-      toast.error("Neplatný minimální počet doporučení.")
+      toast.error("Neplatný minimální počet žádanek.")
       return
     }
 
@@ -260,7 +260,7 @@ export function KpiProfileEditDialog({
                 />
               </Field>
               <Field>
-                <FieldLabel htmlFor="kpi-min-sample">Min. doporučení</FieldLabel>
+                <FieldLabel htmlFor="kpi-min-sample">Min. žádanek</FieldLabel>
                 <Input
                   id="kpi-min-sample"
                   inputMode="numeric"

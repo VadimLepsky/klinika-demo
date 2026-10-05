@@ -83,7 +83,7 @@ export function EditBucketDialog({
             <FieldLabel htmlFor="edit-bucket-beneficiary">Příjemce</FieldLabel>
             <Input
               id="edit-bucket-beneficiary"
-              value={beneficiary === "source" ? "Doporučující" : "Vykonavatel"}
+              value={beneficiary === "source" ? "Odesílající" : "Provádějící"}
               disabled
             />
           </Field>

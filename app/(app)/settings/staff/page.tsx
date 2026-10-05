@@ -58,7 +58,7 @@ export default async function StaffPage() {
       <CardHeader>
         <CardTitle>Zaměstnanci</CardTitle>
         <CardDescription>
-          Označení «lékař» určuje, kdo může dostávat provizi za doporučení.
+          Označení «lékař» určuje, kdo může dostávat provizi za žádanky.
         </CardDescription>
       </CardHeader>
       <CardContent>
