@@ -21,13 +21,14 @@ import {
 } from "@/components/ui/alert-dialog"
 import { deleteKpiProfile, setKpiProfileActive } from "@/app/(app)/settings/kpi/actions"
 import { KpiProfileEditDialog } from "@/components/settings/kpi-profile-edit-dialog"
-import { formatRate } from "@/lib/format"
+import { useI18n } from "@/lib/i18n/client"
 import type { KpiBandsByMetric } from "@/lib/kpi"
 import type { KpiProfileWithCount } from "@/lib/queries/kpi"
 
 const IN_USE_TOOLTIP = "Profil byl někdy přiřazen lékaři — deaktivujte ho místo smazání."
 
 function DeleteButton({ profile }: { profile: KpiProfileWithCount }) {
+  const { t } = useI18n()
   const [pending, startTransition] = useTransition()
 
   if (profile.ever_assigned) {
@@ -38,12 +39,12 @@ function DeleteButton({ profile }: { profile: KpiProfileWithCount }) {
             <span tabIndex={0} className="inline-flex">
               <Button variant="outline" size="sm" disabled className="pointer-events-none">
                 <Trash2 data-icon="inline-start" />
-                Smazat
+                {t("Smazat")}
               </Button>
             </span>
           }
         />
-        <TooltipContent>{IN_USE_TOOLTIP}</TooltipContent>
+        <TooltipContent>{t(IN_USE_TOOLTIP)}</TooltipContent>
       </Tooltip>
     )
   }
@@ -54,28 +55,28 @@ function DeleteButton({ profile }: { profile: KpiProfileWithCount }) {
         render={
           <Button variant="outline" size="sm" disabled={pending}>
             {pending ? <Spinner data-icon="inline-start" /> : <Trash2 data-icon="inline-start" />}
-            Smazat
+            {t("Smazat")}
           </Button>
         }
       />
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Smazat profil «{profile.name}»?</AlertDialogTitle>
-          <AlertDialogDescription>Tuto akci nelze vrátit zpět.</AlertDialogDescription>
+          <AlertDialogTitle>{t("Smazat profil «{name}»?", { name: t(profile.name) })}</AlertDialogTitle>
+          <AlertDialogDescription>{t("Tuto akci nelze vrátit zpět.")}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Zrušit</AlertDialogCancel>
+          <AlertDialogCancel>{t("Zrušit")}</AlertDialogCancel>
           <AlertDialogAction
             variant="destructive"
             onClick={() =>
               startTransition(async () => {
                 const res = await deleteKpiProfile(profile.id)
-                if (res.ok) toast.success(`Profil «${profile.name}» byl smazán.`)
+                if (res.ok) toast.success(t("Profil «{name}» byl smazán.", { name: t(profile.name) }))
                 else toast.error(res.error)
               })
             }
           >
-            Smazat
+            {t("Smazat")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -84,6 +85,7 @@ function DeleteButton({ profile }: { profile: KpiProfileWithCount }) {
 }
 
 function ToggleActiveButton({ profile }: { profile: KpiProfileWithCount }) {
+  const { t } = useI18n()
   const [pending, startTransition] = useTransition()
   return (
     <Button
@@ -93,13 +95,13 @@ function ToggleActiveButton({ profile }: { profile: KpiProfileWithCount }) {
       onClick={() =>
         startTransition(async () => {
           const res = await setKpiProfileActive(profile.id, !profile.active)
-          if (res.ok) toast.success(profile.active ? "Profil byl deaktivován." : "Profil byl aktivován.")
+          if (res.ok) toast.success(profile.active ? t("Profil byl deaktivován.") : t("Profil byl aktivován."))
           else toast.error(res.error)
         })
       }
     >
       {pending ? <Spinner data-icon="inline-start" /> : null}
-      {profile.active ? "Deaktivovat" : "Aktivovat"}
+      {profile.active ? t("Deaktivovat") : t("Aktivovat")}
     </Button>
   )
 }
@@ -111,33 +113,34 @@ export function KpiProfilesTable({
   profiles: KpiProfileWithCount[]
   bandsByProfile: Map<string, KpiBandsByMetric>
 }) {
+  const { t, formatRate } = useI18n()
   return (
     <div className="overflow-x-auto rounded-lg border border-border">
       <Table className="w-full min-w-[900px]">
         <TableHeader>
           <TableRow>
-            <TableHead className="pl-4">Název</TableHead>
-            <TableHead className="w-[110px] text-right">Bonus</TableHead>
-            <TableHead className="w-[110px] text-right">Postih</TableHead>
-            <TableHead className="w-[100px] text-right">Lékařů</TableHead>
-            <TableHead className="w-[140px]">Stav</TableHead>
-            <TableHead className="w-[300px] pr-4 text-right">Akce</TableHead>
+            <TableHead className="pl-4">{t("Název")}</TableHead>
+            <TableHead className="w-[110px] text-right">{t("Bonus")}</TableHead>
+            <TableHead className="w-[110px] text-right">{t("Postih")}</TableHead>
+            <TableHead className="w-[100px] text-right">{t("Lékařů")}</TableHead>
+            <TableHead className="w-[140px]">{t("Stav")}</TableHead>
+            <TableHead className="w-[300px] pr-4 text-right">{t("Akce")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {profiles.length > 0 ? (
             profiles.map((p) => (
               <TableRow key={p.id}>
-                <TableCell className="pl-4 font-medium text-foreground">{p.name}</TableCell>
+                <TableCell className="pl-4 font-medium text-foreground">{t(p.name)}</TableCell>
                 <TableCell className="text-right tabular-nums">{formatRate(p.max_bonus)}</TableCell>
                 <TableCell className="text-right tabular-nums">{formatRate(p.max_penalty)}</TableCell>
                 <TableCell className="text-right tabular-nums">{p.doctor_count}</TableCell>
                 <TableCell>
                   {p.active ? (
-                    <Badge variant="secondary">Aktivní</Badge>
+                    <Badge variant="secondary">{t("Aktivní")}</Badge>
                   ) : (
                     <Badge variant="outline" className="text-muted-foreground">
-                      Neaktivní
+                      {t("Neaktivní")}
                     </Badge>
                   )}
                 </TableCell>
@@ -149,7 +152,7 @@ export function KpiProfilesTable({
                       trigger={
                         <Button variant="outline" size="sm">
                           <Pencil data-icon="inline-start" />
-                          Upravit
+                          {t("Upravit")}
                         </Button>
                       }
                     />
@@ -162,7 +165,7 @@ export function KpiProfilesTable({
           ) : (
             <TableRow>
               <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
-                Zatím žádný KPI profil.
+                {t("Zatím žádný KPI profil.")}
               </TableCell>
             </TableRow>
           )}

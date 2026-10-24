@@ -13,21 +13,21 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart"
-import { formatCurrency, formatMonth } from "@/lib/format"
+import { useI18n } from "@/lib/i18n/client"
 import { SERIES_COLORS } from "@/lib/category-colors"
 import type { MonthlySeriesPoint } from "@/lib/queries/dashboard"
 
-const chartConfig: ChartConfig = {
-  commission: { label: "Provize", color: SERIES_COLORS.commission },
-}
-
 export function CommissionBarChart({ series }: { series: MonthlySeriesPoint[] }) {
+  const { t, formatCurrency, formatMonth, formatCompact } = useI18n()
+  const chartConfig: ChartConfig = {
+    commission: { label: t("Provize"), color: SERIES_COLORS.commission },
+  }
   const data = series.map((p) => ({ label: formatMonth(p.period), commission: p.commission }))
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Provize po měsících</CardTitle>
+        <CardTitle>{t("Provize po měsících")}</CardTitle>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="aspect-auto h-[300px] w-full">
@@ -39,7 +39,7 @@ export function CommissionBarChart({ series }: { series: MonthlySeriesPoint[] })
               axisLine={false}
               tickMargin={8}
               width={64}
-              tickFormatter={(v) => new Intl.NumberFormat("cs-CZ", { notation: "compact" }).format(Number(v))}
+              tickFormatter={(v) => formatCompact(Number(v))}
             />
             <ChartTooltip
               content={<ChartTooltipContent formatter={(value) => formatCurrency(Number(value))} />}

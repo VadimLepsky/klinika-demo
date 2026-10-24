@@ -26,6 +26,7 @@ import {
   type BandColor,
   type CoefficientBand,
 } from "@/lib/coefficient"
+import { useI18n } from "@/lib/i18n/client"
 import { cn } from "@/lib/utils"
 
 /** A band row being edited. `minPct` is kept as free-form text so typing digits never gets zero-padded. */
@@ -49,6 +50,8 @@ export function SpecializationEditDialog({
   initialName: string
   initialBands: CoefficientBand[]
 }) {
+  const { t } = useI18n()
+  const colorItems = Object.fromEntries(BAND_COLORS.map((c) => [c, t(BAND_COLOR_LABELS[c])]))
   const [open, setOpen] = useState(false)
   const [name, setName] = useState(initialName)
   const [bands, setBands] = useState<EditableBand[]>(() => toEditable(initialBands))
@@ -84,13 +87,13 @@ export function SpecializationEditDialog({
       for (let i = 1; i < bands.length; i++) {
         const value = Number(bands[i].minPct)
         if (bands[i].minPct.trim() === "" || !Number.isFinite(value) || value <= 0 || value > 100) {
-          toast.error("Práh musí být číslo větší než 0.")
+          toast.error(t("Práh musí být číslo větší než 0."))
           return
         }
       }
       const values = bands.map((b, i) => (i === 0 ? 0 : Number(b.minPct)))
       if (new Set(values).size !== values.length) {
-        toast.error("Prahy musí být jedinečné.")
+        toast.error(t("Prahy musí být jedinečné."))
         return
       }
     }
@@ -102,7 +105,7 @@ export function SpecializationEditDialog({
     startTransition(async () => {
       const res = await updateSpecialization(specId, name, payload)
       if (res.ok) {
-        toast.success("Specializace byla aktualizována.")
+        toast.success(t("Specializace byla aktualizována."))
         setOpen(false)
       } else {
         toast.error(res.error)
@@ -121,7 +124,7 @@ export function SpecializationEditDialog({
       <DialogTrigger render={trigger} />
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Upravit specializaci</DialogTitle>
+          <DialogTitle>{t("Upravit specializaci")}</DialogTitle>
         </DialogHeader>
         <form
           onSubmit={(e) => {
@@ -132,7 +135,7 @@ export function SpecializationEditDialog({
         >
           <FieldGroup>
             <Field>
-              <FieldLabel htmlFor="specialization-edit-name">Název</FieldLabel>
+              <FieldLabel htmlFor="specialization-edit-name">{t("Název")}</FieldLabel>
               <Input
                 id="specialization-edit-name"
                 value={name}
@@ -146,7 +149,7 @@ export function SpecializationEditDialog({
 
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-foreground">Prahy koeficientu</span>
+              <span className="text-sm font-medium text-foreground">{t("Prahy koeficientu")}</span>
               <div className="flex items-center gap-2">
                 <Button
                   type="button"
@@ -156,11 +159,11 @@ export function SpecializationEditDialog({
                   onClick={() => setBands(toEditable(DEFAULT_COEFFICIENT_BANDS))}
                 >
                   <RotateCcw data-icon="inline-start" />
-                  Výchozí
+                  {t("Výchozí")}
                 </Button>
                 <Button type="button" variant="outline" size="sm" disabled={pending} onClick={addBand}>
                   <Plus data-icon="inline-start" />
-                  Přidat práh
+                  {t("Přidat práh")}
                 </Button>
               </div>
             </div>
@@ -187,7 +190,7 @@ export function SpecializationEditDialog({
                 <div key={b.key} className="flex items-center gap-2">
                   <div className="flex w-[92px] shrink-0 items-center gap-1">
                     {i === 0 ? (
-                      <Input value="0" disabled className="tabular-nums" aria-label="Práh, %" />
+                      <Input value="0" disabled className="tabular-nums" aria-label={t("Práh, %")} />
                     ) : (
                       <Input
                         type="number"
@@ -199,7 +202,7 @@ export function SpecializationEditDialog({
                         onChange={(e) => updateBand(b.key, { minPct: e.target.value })}
                         onFocus={(e) => e.target.select()}
                         className="tabular-nums"
-                        aria-label="Práh, %"
+                        aria-label={t("Práh, %")}
                       />
                     )}
                     <span className="text-sm text-muted-foreground">%</span>
@@ -208,9 +211,9 @@ export function SpecializationEditDialog({
                     value={b.color}
                     onValueChange={(value) => value && updateBand(b.key, { color: value as BandColor })}
                     disabled={pending}
-                    items={BAND_COLOR_LABELS}
+                    items={colorItems}
                   >
-                    <SelectTrigger className="w-[140px] shrink-0" aria-label="Barva">
+                    <SelectTrigger className="w-[140px] shrink-0" aria-label={t("Barva")}>
                       <span className="flex items-center gap-2">
                         <span className={cn("size-2.5 rounded-full", getBandSwatchClassName(b.color))} />
                         <SelectValue />
@@ -221,7 +224,7 @@ export function SpecializationEditDialog({
                         <SelectItem key={color} value={color}>
                           <span className="flex items-center gap-2">
                             <span className={cn("size-2.5 rounded-full", getBandSwatchClassName(color))} />
-                            {BAND_COLOR_LABELS[color]}
+                            {colorItems[color]}
                           </span>
                         </SelectItem>
                       ))}
@@ -233,23 +236,23 @@ export function SpecializationEditDialog({
                     size="icon"
                     disabled={pending}
                     onClick={() => removeBand(b.key)}
-                    aria-label="Smazat práh"
+                    aria-label={t("Smazat práh")}
                   >
                     <Trash2 />
                   </Button>
                 </div>
               ))}
               {bands.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Používají se výchozí prahy.</p>
+                <p className="text-sm text-muted-foreground">{t("Používají se výchozí prahy.")}</p>
               ) : null}
             </div>
           </div>
 
           <DialogFooter>
-            <DialogClose render={<Button type="button" variant="ghost">Zrušit</Button>} />
+            <DialogClose render={<Button type="button" variant="ghost">{t("Zrušit")}</Button>} />
             <Button type="submit" disabled={pending || !name.trim()}>
               {pending ? <Spinner data-icon="inline-start" /> : null}
-              Uložit
+              {t("Uložit")}
             </Button>
           </DialogFooter>
         </form>

@@ -21,6 +21,7 @@ import {
   getPeriods,
 } from "@/lib/queries/dashboard"
 import { getSessionUser } from "@/lib/session"
+import { getI18n } from "@/lib/i18n/server"
 
 export const dynamic = "force-dynamic"
 
@@ -30,6 +31,7 @@ export default async function DashboardPage({
   searchParams: Promise<{ period?: string; spec?: string }>
 }) {
   const { period: periodParam, spec: specParam } = await searchParams
+  const { t } = await getI18n()
   const periods = await getPeriods()
 
   if (periods.length === 0) {
@@ -39,9 +41,9 @@ export default async function DashboardPage({
           <EmptyMedia variant="icon">
             <CalendarX />
           </EmptyMedia>
-          <EmptyTitle>Žádná období</EmptyTitle>
+          <EmptyTitle>{t("Žádná období")}</EmptyTitle>
           <EmptyDescription>
-            V databázi zatím není žádný spočítaný měsíc. Data se objeví po běhu výpočetního workeru.
+            {t("V databázi zatím není žádný spočítaný měsíc. Data se objeví po běhu výpočetního workeru.")}
           </EmptyDescription>
         </EmptyHeader>
       </Empty>
@@ -71,8 +73,8 @@ export default async function DashboardPage({
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold text-foreground">Přehled provizí</h1>
-          <p className="text-sm text-muted-foreground">Vývoj ukazatelů za vybraný měsíc</p>
+          <h1 className="text-2xl font-semibold text-foreground">{t("Přehled provizí")}</h1>
+          <p className="text-sm text-muted-foreground">{t("Vývoj ukazatelů za vybraný měsíc")}</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <SpecializationFilter options={specOptions} current={selectedSpec} />

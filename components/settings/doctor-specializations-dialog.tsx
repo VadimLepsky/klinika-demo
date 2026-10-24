@@ -28,6 +28,7 @@ import {
 import { SpecializationBadges } from "@/components/specializations/specialization-badges"
 import { saveDoctorSpecializations } from "@/app/(app)/settings/specializations/actions"
 import type { DoctorSpecializations, Specialization } from "@/lib/queries/specializations"
+import { useI18n } from "@/lib/i18n/client"
 
 const NO_PRIMARY = "none"
 
@@ -46,6 +47,7 @@ export function DoctorSpecializationsDialog({
   specs: DoctorSpecializations | undefined
   options: Specialization[]
 }) {
+  const { t } = useI18n()
   const initialPrimary = activeIdOrNull(specs?.primary) ?? NO_PRIMARY
   const initialAdditional = (specs?.additional ?? []).filter((s) => s.active).map((s) => s.id)
 
@@ -55,8 +57,8 @@ export function DoctorSpecializationsDialog({
   const [pending, startTransition] = useTransition()
 
   const primaryItems: Record<string, string> = {
-    [NO_PRIMARY]: "Bez hlavní",
-    ...Object.fromEntries(options.map((o) => [o.id, o.name])),
+    [NO_PRIMARY]: t("Bez hlavní"),
+    ...Object.fromEntries(options.map((o) => [o.id, t(o.name)])),
   }
   const additionalOptions = options.filter((o) => o.id !== primary)
 
@@ -72,7 +74,7 @@ export function DoctorSpecializationsDialog({
         additional.filter((id) => id !== primaryId),
       )
       if (res.ok) {
-        toast.success(`Specializace «${doctorName}» byly uloženy.`)
+        toast.success(t("Specializace «{name}» byly uloženy.", { name: doctorName }))
         setOpen(false)
       } else {
         toast.error(res.error)
@@ -96,20 +98,20 @@ export function DoctorSpecializationsDialog({
           <button
             type="button"
             className="flex min-h-8 w-full items-center rounded-md px-1 text-left hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            aria-label={`Specializace: ${doctorName}`}
+            aria-label={t("Specializace: {name}", { name: doctorName })}
           >
-            <SpecializationBadges specs={specs} emptyLabel="Neuvedeno" />
+            <SpecializationBadges specs={specs} emptyLabel={t("Neuvedeno")} />
           </button>
         }
       />
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Specializace</DialogTitle>
+          <DialogTitle>{t("Specializace")}</DialogTitle>
           <DialogDescription>{doctorName}</DialogDescription>
         </DialogHeader>
         <FieldGroup>
           <Field>
-            <FieldLabel htmlFor={`primary-spec-${masterId}`}>Hlavní</FieldLabel>
+            <FieldLabel htmlFor={`primary-spec-${masterId}`}>{t("Hlavní")}</FieldLabel>
             <Select
               value={primary}
               onValueChange={(v) => {
@@ -125,10 +127,10 @@ export function DoctorSpecializationsDialog({
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  <SelectItem value={NO_PRIMARY}>Bez hlavní</SelectItem>
+                  <SelectItem value={NO_PRIMARY}>{t("Bez hlavní")}</SelectItem>
                   {options.map((o) => (
                     <SelectItem key={o.id} value={o.id}>
-                      {o.name}
+                      {t(o.name)}
                     </SelectItem>
                   ))}
                 </SelectGroup>
@@ -136,7 +138,7 @@ export function DoctorSpecializationsDialog({
             </Select>
           </Field>
           <FieldSet>
-            <FieldLegend variant="label">Další</FieldLegend>
+            <FieldLegend variant="label">{t("Další")}</FieldLegend>
             {additionalOptions.length > 0 ? (
               <div className="flex max-h-56 flex-col gap-2 overflow-y-auto rounded-md border border-border p-3">
                 {additionalOptions.map((o) => {
@@ -150,22 +152,22 @@ export function DoctorSpecializationsDialog({
                         disabled={pending}
                       />
                       <Label htmlFor={id} className="font-normal">
-                        {o.name}
+                        {t(o.name)}
                       </Label>
                     </div>
                   )
                 })}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">Žádné aktivní specializace.</p>
+              <p className="text-sm text-muted-foreground">{t("Žádné aktivní specializace.")}</p>
             )}
           </FieldSet>
         </FieldGroup>
         <DialogFooter>
-          <DialogClose render={<Button variant="ghost">Zrušit</Button>} />
+          <DialogClose render={<Button variant="ghost">{t("Zrušit")}</Button>} />
           <Button onClick={save} disabled={pending}>
             {pending ? <Spinner data-icon="inline-start" /> : null}
-            Uložit
+            {t("Uložit")}
           </Button>
         </DialogFooter>
       </DialogContent>

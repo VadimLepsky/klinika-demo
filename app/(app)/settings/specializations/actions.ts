@@ -1,5 +1,6 @@
 "use server"
 
+import { actionError, tr } from "@/lib/i18n/server"
 import { revalidatePath } from "next/cache"
 import { db, newId } from "@/lib/demo/store"
 import { writeAudit } from "@/lib/audit"
@@ -49,11 +50,11 @@ function validateBands(bands: CoefficientBand[]): string | null {
 export async function createSpecialization(rawName: string): Promise<ActionResult> {
   const actor = await getActorEmail()
   const name = normalizeName(rawName)
-  if (!name) return { ok: false, error: `Zadejte název (do ${MAX_NAME_LENGTH} znaků).` }
+  if (!name) return { ok: false, error: await tr("Zadejte název (do {max} znaků).", { max: MAX_NAME_LENGTH }) }
   try {
     const state = db()
     if (state.specializations.some((s) => s.name === name)) {
-      return { ok: false, error: "Specializace s tímto názvem už existuje." }
+      return { ok: false, error: await tr("Specializace s tímto názvem už existuje.") }
     }
     const id = newId()
     state.specializations.push({ id, name, active: true })
@@ -68,7 +69,7 @@ export async function createSpecialization(rawName: string): Promise<ActionResul
     revalidateSpecializationPaths()
     return { ok: true }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Chyba" }
+    return { ok: false, error: await actionError(e) }
   }
 }
 
@@ -84,14 +85,14 @@ export async function updateSpecialization(
 ): Promise<ActionResult> {
   const actor = await getActorEmail()
   const name = normalizeName(rawName)
-  if (!name) return { ok: false, error: `Zadejte název (do ${MAX_NAME_LENGTH} znaků).` }
+  if (!name) return { ok: false, error: await tr("Zadejte název (do {max} znaků).", { max: MAX_NAME_LENGTH }) }
   const bandsError = validateBands(bands)
-  if (bandsError) return { ok: false, error: bandsError }
+  if (bandsError) return { ok: false, error: await tr(bandsError) }
 
   try {
     const state = db()
     const current = state.specializations.find((s) => s.id === id)
-    if (!current) return { ok: false, error: "Specializace nebyla nalezena." }
+    if (!current) return { ok: false, error: await tr("Specializace nebyla nalezena.") }
 
     const oldBands = state.specializationBands
       .filter((b) => b.specialization_id === id)
@@ -119,7 +120,7 @@ export async function updateSpecialization(
     revalidateSpecializationPaths()
     return { ok: true }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Chyba" }
+    return { ok: false, error: await actionError(e) }
   }
 }
 
@@ -128,7 +129,7 @@ export async function setSpecializationActive(id: string, active: boolean): Prom
   try {
     const state = db()
     const current = state.specializations.find((s) => s.id === id)
-    if (!current) return { ok: false, error: "Specializace nebyla nalezena." }
+    if (!current) return { ok: false, error: await tr("Specializace nebyla nalezena.") }
     if (current.active === active) return { ok: true }
 
     const oldActive = current.active
@@ -144,7 +145,7 @@ export async function setSpecializationActive(id: string, active: boolean): Prom
     revalidateSpecializationPaths()
     return { ok: true }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Chyba" }
+    return { ok: false, error: await actionError(e) }
   }
 }
 
@@ -153,9 +154,9 @@ export async function deleteSpecialization(id: string): Promise<ActionResult> {
   try {
     const state = db()
     const current = state.specializations.find((s) => s.id === id)
-    if (!current) return { ok: false, error: "Specializace nebyla nalezena." }
+    if (!current) return { ok: false, error: await tr("Specializace nebyla nalezena.") }
     const assignedCount = state.staffSpecializations.filter((ss) => ss.specialization_id === id).length
-    if (assignedCount > 0) return { ok: false, error: ASSIGNED_ERROR }
+    if (assignedCount > 0) return { ok: false, error: await tr(ASSIGNED_ERROR) }
 
     state.specializations = state.specializations.filter((s) => s.id !== id)
     state.specializationBands = state.specializationBands.filter((b) => b.specialization_id !== id)
@@ -170,7 +171,7 @@ export async function deleteSpecialization(id: string): Promise<ActionResult> {
     revalidateSpecializationPaths()
     return { ok: true }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Chyba" }
+    return { ok: false, error: await actionError(e) }
   }
 }
 
@@ -193,11 +194,11 @@ export async function saveDoctorSpecializations(
     const state = db()
     const staff = state.staff.find((s) => s.master_id === masterId)
     if (staff?.is_doctor !== true) {
-      return { ok: false, error: "Specializaci lze přiřadit jen lékaři." }
+      return { ok: false, error: await tr("Specializaci lze přiřadit jen lékaři.") }
     }
     const activeIds = new Set(state.specializations.filter((s) => s.active).map((s) => s.id))
     if (!requested.every((id) => activeIds.has(id))) {
-      return { ok: false, error: "Některá specializace je neaktivní nebo neexistuje. Obnovte stránku." }
+      return { ok: false, error: await tr("Některá specializace je neaktivní nebo neexistuje. Obnovte stránku.") }
     }
 
     const oldRows = state.staffSpecializations.filter((ss) => ss.master_id === masterId)
@@ -227,6 +228,6 @@ export async function saveDoctorSpecializations(
     revalidateSpecializationPaths()
     return { ok: true }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Chyba" }
+    return { ok: false, error: await actionError(e) }
   }
 }

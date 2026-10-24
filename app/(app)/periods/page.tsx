@@ -5,35 +5,39 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { FreezeButton } from "@/components/periods/freeze-button"
 import { BlockerSummary } from "@/components/periods/blocker-summary"
 import { getPeriodsWithBlockers } from "@/lib/queries/periods"
-import { formatCurrency, formatDateTime, formatMonth } from "@/lib/format"
+import { getI18n } from "@/lib/i18n/server"
 
-export const metadata = { title: "Období — demo.clinic" }
+export async function generateMetadata() {
+  const { t } = await getI18n()
+  return { title: t("Období — demo.clinic") }
+}
 
 export const dynamic = "force-dynamic"
 
 export default async function PeriodsPage() {
+  const { t, formatCurrency, formatDateTime, formatMonth } = await getI18n()
   const periods = await getPeriodsWithBlockers()
   const frozen = periods.filter((p) => p.status === "frozen").length
 
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Období</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">{t("Období")}</h1>
         <p className="text-sm text-muted-foreground">
-          Uzavřený měsíc je uzamčen natrvalo — přepočet už není možný.
+          {t("Uzavřený měsíc je uzamčen natrvalo — přepočet už není možný.")}
         </p>
       </header>
 
       <div className="grid gap-4 sm:grid-cols-3">
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Celkem měsíců</CardDescription>
+            <CardDescription>{t("Celkem měsíců")}</CardDescription>
             <CardTitle className="text-2xl tabular-nums">{periods.length}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Uzavřeno</CardDescription>
+            <CardDescription>{t("Uzavřeno")}</CardDescription>
             <CardTitle className="flex items-center gap-2 text-2xl tabular-nums">
               <Lock className="size-4 text-muted-foreground" />
               {frozen}
@@ -42,7 +46,7 @@ export default async function PeriodsPage() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Rozpracováno</CardDescription>
+            <CardDescription>{t("Rozpracováno")}</CardDescription>
             <CardTitle className="text-2xl tabular-nums">{periods.length - frozen}</CardTitle>
           </CardHeader>
         </Card>
@@ -52,23 +56,23 @@ export default async function PeriodsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <Snowflake className="size-4 text-muted-foreground" />
-            Měsíce
+            {t("Měsíce")}
           </CardTitle>
           <CardDescription>
-            Uzavřít lze jen měsíc, ve kterém nezůstaly nevyřešené položky.
+            {t("Uzavřít lze jen měsíc, ve kterém nezůstaly nevyřešené položky.")}
           </CardDescription>
         </CardHeader>
         <CardContent className="overflow-x-auto px-0 pb-0">
           <Table className="table-fixed w-full min-w-[900px]">
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[140px] pl-6">Měsíc</TableHead>
-                <TableHead className="w-[130px]">Stav</TableHead>
-                <TableHead className="w-[140px] text-right">Provize, Kč</TableHead>
-                <TableHead className="w-[100px] text-right">Lékařů</TableHead>
-                <TableHead className="w-[160px]">Připravenost</TableHead>
-                <TableHead className="w-[160px]">Uzavřeno</TableHead>
-                <TableHead className="w-[140px] pr-6 text-right">Akce</TableHead>
+                <TableHead className="w-[140px] pl-6">{t("Měsíc")}</TableHead>
+                <TableHead className="w-[130px]">{t("Stav")}</TableHead>
+                <TableHead className="w-[140px] text-right">{t("Provize, Kč")}</TableHead>
+                <TableHead className="w-[100px] text-right">{t("Lékařů")}</TableHead>
+                <TableHead className="w-[160px]">{t("Připravenost")}</TableHead>
+                <TableHead className="w-[160px]">{t("Uzavřeno")}</TableHead>
+                <TableHead className="w-[140px] pr-6 text-right">{t("Akce")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -82,10 +86,10 @@ export default async function PeriodsPage() {
                       {p.status === "frozen" ? (
                         <Badge variant="secondary" className="gap-1">
                           <Lock className="size-3" />
-                          Uzavřeno
+                          {t("Uzavřeno")}
                         </Badge>
                       ) : (
-                        <Badge variant="outline">Rozpracováno</Badge>
+                        <Badge variant="outline">{t("Rozpracováno")}</Badge>
                       )}
                     </TableCell>
                     <TableCell className="whitespace-nowrap text-right tabular-nums">
@@ -130,7 +134,7 @@ export default async function PeriodsPage() {
               ) : (
                 <TableRow>
                   <TableCell colSpan={7} className="py-10 text-center text-muted-foreground">
-                    Žádná období.
+                    {t("Žádná období.")}
                   </TableCell>
                 </TableRow>
               )}

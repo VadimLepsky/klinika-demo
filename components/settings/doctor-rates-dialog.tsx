@@ -20,7 +20,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { saveDoctorBucketRates } from "@/app/(app)/settings/actions"
-import { formatRate, monthInputToDate } from "@/lib/format"
+import { monthInputToDate } from "@/lib/format"
+import { useI18n } from "@/lib/i18n/client"
 import type { DoctorRateOverride } from "@/lib/queries/settings"
 
 export type DoctorRateRule = { bucket: string; label: string; generalRate: number | null }
@@ -65,6 +66,7 @@ export function DoctorRatesDialog({
   defaultMonth: string
   minMonth: string
 }) {
+  const { t, formatRate } = useI18n()
   const [open, setOpen] = useState(false)
   const [state, setState] = useState<Record<string, RowState>>(() => initialState(rules, overrides))
   const [month, setMonth] = useState(defaultMonth)
@@ -90,7 +92,7 @@ export function DoctorRatesDialog({
       if (row.enabled && row.pct.trim() !== "") {
         const pct = Number.parseFloat(row.pct.replace(",", "."))
         if (!Number.isFinite(pct) || pct < 0 || pct > 100) {
-          toast.error(`«${rule.label}»: neplatná sazba.`)
+          toast.error(t("«{name}»: neplatná sazba.", { name: t(rule.label) }))
           return
         }
         ratePctValue = pct
@@ -101,8 +103,8 @@ export function DoctorRatesDialog({
     startTransition(async () => {
       const res = await saveDoctorBucketRates(masterId, monthInputToDate(month), payload)
       if (res.ok) {
-        toast.success("Sazby byly uloženy.", {
-          description: "Změny se projeví při dalším přepočtu měsíce.",
+        toast.success(t("Sazby byly uloženy."), {
+          description: t("Změny se projeví při dalším přepočtu měsíce."),
         })
         setOpen(false)
       } else {
@@ -119,29 +121,29 @@ export function DoctorRatesDialog({
         render={
           <Button variant="outline" size="sm">
             <SlidersHorizontal data-icon="inline-start" />
-            Sazby
+            {t("Sazby")}
           </Button>
         }
       />
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Sazby: {doctorName}</DialogTitle>
+          <DialogTitle>{t("Sazby: {name}", { name: doctorName })}</DialogTitle>
           <DialogDescription>
-            Osobní sazby podle pravidel. Prázdné pole znamená obecnou sazbu pravidla.
+            {t("Osobní sazby podle pravidel. Prázdné pole znamená obecnou sazbu pravidla.")}
           </DialogDescription>
         </DialogHeader>
 
         <div className="-mx-6 max-h-[52vh] overflow-y-auto px-6 py-1">
           <div className="grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-1 sm:grid-cols-[1fr_auto_auto_auto]">
-            <div className="hidden text-xs font-medium text-muted-foreground sm:block">Pravidlo</div>
+            <div className="hidden text-xs font-medium text-muted-foreground sm:block">{t("Pravidlo")}</div>
             <div className="hidden text-right text-xs font-medium text-muted-foreground sm:block">
-              Obecná
+              {t("Obecná")}
             </div>
             <div className="hidden text-center text-xs font-medium text-muted-foreground sm:block">
-              Načítat
+              {t("Načítat")}
             </div>
             <div className="hidden text-right text-xs font-medium text-muted-foreground sm:block">
-              Osobní, %
+              {t("Osobní, %")}
             </div>
 
             {rows.map((rule) => {
@@ -150,8 +152,8 @@ export function DoctorRatesDialog({
               return (
                 <div key={rule.bucket} className="contents">
                   <div className="col-span-2 mt-3 border-t border-border pt-3 sm:col-span-4 sm:hidden" />
-                  <div className="min-w-0 truncate font-medium text-foreground" title={rule.label}>
-                    {rule.label}
+                  <div className="min-w-0 truncate font-medium text-foreground" title={t(rule.label)}>
+                    {t(rule.label)}
                   </div>
                   <div className="whitespace-nowrap text-right text-sm tabular-nums text-muted-foreground">
                     {rule.generalRate != null ? formatRate(rule.generalRate) : "—"}
@@ -161,7 +163,7 @@ export function DoctorRatesDialog({
                       checked={row.enabled}
                       onCheckedChange={(v) => setEnabled(rule.bucket, v)}
                       disabled={pending}
-                      aria-label={`Načítat podle pravidla «${rule.label}»`}
+                      aria-label={t("Načítat podle pravidla «{name}»", { name: t(rule.label) })}
                     />
                   </div>
                   <div className="flex justify-end">
@@ -172,7 +174,7 @@ export function DoctorRatesDialog({
                       placeholder={rule.generalRate != null ? ratePct(rule.generalRate) : "—"}
                       disabled={pending || !row.enabled}
                       className="w-24 text-right tabular-nums"
-                      aria-label={`Osobní sazba podle pravidla «${rule.label}»`}
+                      aria-label={t("Osobní sazba podle pravidla «{name}»", { name: t(rule.label) })}
                     />
                   </div>
                 </div>
@@ -182,7 +184,7 @@ export function DoctorRatesDialog({
         </div>
 
         <div className="flex flex-col gap-2">
-          <Label htmlFor="doctor-rate-valid-from">Platí od</Label>
+          <Label htmlFor="doctor-rate-valid-from">{t("Platí od")}</Label>
           <Input
             id="doctor-rate-valid-from"
             type="month"
@@ -196,14 +198,14 @@ export function DoctorRatesDialog({
 
         <Alert>
           <TriangleAlert />
-          <AlertDescription>Zmrazené měsíce nejsou dostupné k výběru.</AlertDescription>
+          <AlertDescription>{t("Zmrazené měsíce nejsou dostupné k výběru.")}</AlertDescription>
         </Alert>
 
         <DialogFooter>
-          <DialogClose render={<Button variant="ghost">Zrušit</Button>} />
+          <DialogClose render={<Button variant="ghost">{t("Zrušit")}</Button>} />
           <Button onClick={save} disabled={pending}>
             {pending ? <Spinner data-icon="inline-start" /> : null}
-            Uložit
+            {t("Uložit")}
           </Button>
         </DialogFooter>
       </DialogContent>

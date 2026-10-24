@@ -1,3 +1,8 @@
+"use client"
+
+import { useI18n } from "@/lib/i18n/client"
+import type { TFunction } from "@/lib/i18n/translate"
+
 const FIELD_LABEL: Record<string, string> = {
   status: "stav",
   label: "název",
@@ -41,21 +46,24 @@ const VALUE_LABEL: Record<string, string> = {
   false: "ne",
 }
 
-function renderScalar(v: unknown): string {
+// Free-text values (rule names, reasons…) go through t() too, so seeded demo
+// data reads in the UI language; anything not in the catalog shows as stored.
+function renderScalar(v: unknown, t: TFunction): string {
   if (v === null || v === undefined) return "—"
-  if (typeof v === "boolean") return v ? "ano" : "ne"
+  if (typeof v === "boolean") return v ? t("ano") : t("ne")
   const s = String(v)
-  return VALUE_LABEL[s] ?? s
+  return t(VALUE_LABEL[s] ?? s)
 }
 
 /** Formats an audit jsonb payload as a compact "field: value" list. */
 export function ValueDiff({ value }: { value: unknown }) {
+  const { t } = useI18n()
   if (value === null || value === undefined) {
     return <span className="text-muted-foreground">—</span>
   }
 
   if (typeof value !== "object") {
-    const rendered = renderScalar(value)
+    const rendered = renderScalar(value, t)
     return (
       <span className="block max-w-full truncate text-foreground" title={rendered}>
         {rendered}
@@ -71,8 +79,8 @@ export function ValueDiff({ value }: { value: unknown }) {
   return (
     <span className="flex min-w-0 flex-col gap-0.5">
       {entries.map(([k, v]) => {
-        const label = FIELD_LABEL[k] ?? k
-        const rendered = renderScalar(v)
+        const label = FIELD_LABEL[k] ? t(FIELD_LABEL[k]) : k
+        const rendered = renderScalar(v, t)
         return (
           <span
             key={k}

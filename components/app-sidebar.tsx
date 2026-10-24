@@ -14,6 +14,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import { useI18n } from "@/lib/i18n/client"
 import { navSections } from "@/lib/nav"
 import { withPeriod } from "@/lib/period-link"
 
@@ -21,6 +22,7 @@ import { withPeriod } from "@/lib/period-link"
 const PERIOD_AWARE_ROUTES = ["/", "/attention", "/periods"]
 
 export function AppSidebar() {
+  const { t } = useI18n()
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const period = searchParams.get("period")
@@ -46,25 +48,25 @@ export function AppSidebar() {
           </div>
           <div className="flex flex-col">
             <span className="text-sm font-semibold leading-tight">demo.clinic</span>
-            <span className="text-xs text-muted-foreground leading-tight">Provize lékařů</span>
+            <span className="text-xs text-muted-foreground leading-tight">{t("Provize lékařů")}</span>
           </div>
         </div>
       </SidebarHeader>
       <SidebarContent className="pt-5">
         {navSections.map((section, i) => (
           <SidebarGroup key={section.label ?? `section-${i}`}>
-            {section.label ? <SidebarGroupLabel>{section.label}</SidebarGroupLabel> : null}
+            {section.label ? <SidebarGroupLabel>{t(section.label)}</SidebarGroupLabel> : null}
             <SidebarGroupContent>
               <SidebarMenu>
                 {section.items.map((item) => (
                   <SidebarMenuItem key={item.href}>
                     <SidebarMenuButton
                       isActive={isActive(item.href)}
-                      tooltip={item.label}
+                      tooltip={t(item.label)}
                       render={
                         <Link href={linkHref(item.href)}>
                           <item.icon />
-                          <span>{item.label}</span>
+                          <span>{t(item.label)}</span>
                         </Link>
                       }
                     />

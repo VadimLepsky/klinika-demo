@@ -14,9 +14,11 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { mapSourceToDoctor, markSourceNonCommission } from "@/app/(app)/attention/actions"
+import { useI18n } from "@/lib/i18n/client"
 import type { StaffOption, UnmappedSource } from "@/lib/queries/attention"
 
 export function SourceItem({ source, doctors }: { source: UnmappedSource; doctors: StaffOption[] }) {
+  const { t } = useI18n()
   const [selected, setSelected] = useState<string>(source.suggestion?.master_id ?? "")
   const [pending, startTransition] = useTransition()
 
@@ -27,12 +29,12 @@ export function SourceItem({ source, doctors }: { source: UnmappedSource; doctor
 
   const link = () => {
     if (!selected) {
-      toast.error("Zvolte lékaře pro přiřazení.")
+      toast.error(t("Zvolte lékaře pro přiřazení."))
       return
     }
     startTransition(async () => {
       const res = await mapSourceToDoctor(source.source_id, selected)
-      if (res.ok) toast.success(`Zdroj «${source.label}» byl přiřazen k lékaři.`)
+      if (res.ok) toast.success(t("Zdroj «{name}» byl přiřazen k lékaři.", { name: t(source.label) }))
       else toast.error(res.error)
     })
   }
@@ -40,7 +42,7 @@ export function SourceItem({ source, doctors }: { source: UnmappedSource; doctor
   const nonCommission = () => {
     startTransition(async () => {
       const res = await markSourceNonCommission(source.source_id)
-      if (res.ok) toast.success(`Zdroj «${source.label}» byl označen jako bez provize.`)
+      if (res.ok) toast.success(t("Zdroj «{name}» byl označen jako bez provize.", { name: t(source.label) }))
       else toast.error(res.error)
     })
   }
@@ -48,20 +50,20 @@ export function SourceItem({ source, doctors }: { source: UnmappedSource; doctor
   return (
     <div className="flex flex-col gap-3 rounded-lg border border-border p-4">
       <div className="flex flex-col gap-1">
-        <span className="font-medium text-foreground text-pretty">{source.label}</span>
+        <span className="font-medium text-foreground text-pretty">{t(source.label)}</span>
         {source.suggestion ? (
           <span className="text-xs text-muted-foreground">
-            Podobá se: <span className="text-foreground">{source.suggestion.full_name}</span>
+            {t("Podobá se:")} <span className="text-foreground">{source.suggestion.full_name}</span>
           </span>
         ) : (
-          <span className="text-xs text-muted-foreground">Mezi lékaři nebyla nalezena shoda</span>
+          <span className="text-xs text-muted-foreground">{t("Mezi lékaři nebyla nalezena shoda")}</span>
         )}
       </div>
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <Select value={selected} onValueChange={setSelected} disabled={pending} items={items}>
           <SelectTrigger className="w-full sm:w-[260px]">
-            <SelectValue placeholder="Zvolte lékaře" />
+            <SelectValue placeholder={t("Zvolte lékaře")} />
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
@@ -77,11 +79,11 @@ export function SourceItem({ source, doctors }: { source: UnmappedSource; doctor
         <div className="flex gap-2">
           <Button size="sm" onClick={link} disabled={pending}>
             {pending ? <Spinner data-icon="inline-start" /> : <Link2 data-icon="inline-start" />}
-            Přiřadit
+            {t("Přiřadit")}
           </Button>
           <Button size="sm" variant="outline" onClick={nonCommission} disabled={pending}>
             <Ban data-icon="inline-start" />
-            Bez provize
+            {t("Bez provize")}
           </Button>
         </div>
       </div>

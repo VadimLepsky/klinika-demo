@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation"
 import { Separator } from "@/components/ui/separator"
+import { LanguageSwitcher } from "@/components/language-switcher"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { pageTitles } from "@/lib/nav"
 
@@ -19,6 +20,7 @@ export function AppHeader() {
   return (
     <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-2 border-b border-border bg-background/95 px-4 backdrop-blur supports-backdrop-filter:bg-background/80">
       <div className="ml-auto flex items-center gap-1">
+        <LanguageSwitcher />
         <ThemeToggle />
       </div>
     </header>

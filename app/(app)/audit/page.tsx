@@ -6,9 +6,12 @@ import { EntityFilter } from "@/components/audit/entity-filter"
 import { ValueDiff } from "@/components/audit/value-diff"
 import { getAuditEntities, getAuditLog } from "@/lib/queries/audit"
 import { entityLabel } from "@/lib/labels"
-import { formatDateTime } from "@/lib/format"
+import { getI18n } from "@/lib/i18n/server"
 
-export const metadata = { title: "Historie změn — demo.clinic" }
+export async function generateMetadata() {
+  const { t } = await getI18n()
+  return { title: t("Historie změn — demo.clinic") }
+}
 
 export const dynamic = "force-dynamic"
 
@@ -56,6 +59,7 @@ export default async function AuditPage({
   searchParams: Promise<{ entity?: string }>
 }) {
   const { entity } = await searchParams
+  const { t, formatDateTime } = await getI18n()
   const [entities, entries] = await Promise.all([
     getAuditEntities(),
     getAuditLog(entity, 200),
@@ -65,7 +69,7 @@ export default async function AuditPage({
     <div className="flex flex-col gap-6">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Historie změn</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">{t("Historie změn")}</h1>
         </div>
         <EntityFilter entities={entities} current={entity ?? ""} />
       </header>
@@ -74,19 +78,19 @@ export default async function AuditPage({
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <History className="size-4 text-muted-foreground" />
-            Poslední změny
+            {t("Poslední změny")}
           </CardTitle>
         </CardHeader>
         <CardContent className="overflow-x-auto px-0 pb-0">
           <Table className="table-fixed w-full min-w-[900px]">
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[150px] pl-6">Kdy</TableHead>
-                <TableHead className="w-[180px]">Kdo</TableHead>
-                <TableHead className="w-[170px]">Akce</TableHead>
-                <TableHead className="w-[160px]">Objekt</TableHead>
-                <TableHead>Původně</TableHead>
-                <TableHead className="pr-6">Nově</TableHead>
+                <TableHead className="w-[150px] pl-6">{t("Kdy")}</TableHead>
+                <TableHead className="w-[180px]">{t("Kdo")}</TableHead>
+                <TableHead className="w-[170px]">{t("Akce")}</TableHead>
+                <TableHead className="w-[160px]">{t("Objekt")}</TableHead>
+                <TableHead>{t("Původně")}</TableHead>
+                <TableHead className="pr-6">{t("Nově")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -98,19 +102,19 @@ export default async function AuditPage({
                     </TableCell>
                     <TableCell
                       className="max-w-0 truncate text-sm text-foreground"
-                      title={e.user_email ?? "systém"}
+                      title={e.user_email ?? t("systém")}
                     >
-                      {e.user_email ?? "systém"}
+                      {e.user_email ?? t("systém")}
                     </TableCell>
                     <TableCell className="whitespace-nowrap">
                       <Badge variant="outline" className="font-normal">
-                        {ACTION_LABEL[e.action] ?? e.action}
+                        {ACTION_LABEL[e.action] ? t(ACTION_LABEL[e.action]) : e.action}
                       </Badge>
                     </TableCell>
                     <TableCell className="max-w-0 text-sm">
                       <span className="flex flex-col">
-                        <span className="truncate text-foreground" title={entityLabel(e.entity)}>
-                          {entityLabel(e.entity)}
+                        <span className="truncate text-foreground" title={entityLabel(e.entity, t)}>
+                          {entityLabel(e.entity, t)}
                         </span>
                         {e.entity_id ? (
                           <span className="truncate text-xs text-muted-foreground tabular-nums">
@@ -133,7 +137,7 @@ export default async function AuditPage({
               ) : (
                 <TableRow>
                   <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
-                    Filtru neodpovídají žádné záznamy.
+                    {t("Filtru neodpovídají žádné záznamy.")}
                   </TableCell>
                 </TableRow>
               )}

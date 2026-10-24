@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { CreateBucketDialog } from "@/components/settings/create-bucket-dialog"
+import { useI18n } from "@/lib/i18n/client"
 import type { BucketOption } from "@/lib/queries/attention"
 
 const CREATE_SENTINEL = "__create__"
@@ -38,6 +39,7 @@ export function BucketSelect({
   className?: string
   extraOptions?: { value: string; label: string }[]
 }) {
+  const { t } = useI18n()
   const [buckets, setBuckets] = useState(initialBuckets)
   const [createOpen, setCreateOpen] = useState(false)
 
@@ -47,11 +49,11 @@ export function BucketSelect({
 
   const items = useMemo(() => {
     const map: Record<string, string> = {}
-    for (const b of buckets) map[b.bucket] = b.label
+    for (const b of buckets) map[b.bucket] = t(b.label)
     for (const o of extraOptions) map[o.value] = o.label
-    map[CREATE_SENTINEL] = "+ Vytvořit nové"
+    map[CREATE_SENTINEL] = `+ ${t("Vytvořit nové")}`
     return map
-  }, [buckets, extraOptions])
+  }, [buckets, extraOptions, t])
 
   const handleChange = (v: string) => {
     if (v === CREATE_SENTINEL) {
@@ -71,7 +73,7 @@ export function BucketSelect({
           <SelectGroup>
             {buckets.map((b) => (
               <SelectItem key={b.bucket} value={b.bucket}>
-                {b.label}
+                {t(b.label)}
               </SelectItem>
             ))}
             {extraOptions.map((o) => (
@@ -84,7 +86,7 @@ export function BucketSelect({
           <SelectGroup>
             <SelectItem value={CREATE_SENTINEL} className="text-primary">
               <Plus className="size-3.5" />
-              Vytvořit nové
+              {t("Vytvořit nové")}
             </SelectItem>
           </SelectGroup>
         </SelectContent>

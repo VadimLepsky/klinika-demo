@@ -1,4 +1,7 @@
+"use client"
+
 import { Badge } from "@/components/ui/badge"
+import { useI18n } from "@/lib/i18n/client"
 import type { DoctorSpecializations } from "@/lib/queries/specializations"
 import { cn } from "@/lib/utils"
 
@@ -11,6 +14,7 @@ export function SpecializationBadges({
   emptyLabel?: string
   className?: string
 }) {
+  const { t } = useI18n()
   const primary = specs?.primary ?? null
   const additional = specs?.additional ?? []
 
@@ -20,10 +24,10 @@ export function SpecializationBadges({
 
   return (
     <div className={cn("flex flex-wrap items-center gap-1", className)}>
-      {primary ? <Badge title="Hlavní specializace">{primary.name}</Badge> : null}
+      {primary ? <Badge title={t("Hlavní specializace")}>{t(primary.name)}</Badge> : null}
       {additional.map((s) => (
-        <Badge key={s.id} variant="secondary" className="text-muted-foreground" title="Další specializace">
-          {s.name}
+        <Badge key={s.id} variant="secondary" className="text-muted-foreground" title={t("Další specializace")}>
+          {t(s.name)}
         </Badge>
       ))}
     </div>

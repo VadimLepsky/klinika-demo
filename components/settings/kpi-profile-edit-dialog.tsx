@@ -27,6 +27,7 @@ import {
   type KpiMetric,
 } from "@/lib/kpi"
 import type { KpiProfile } from "@/lib/queries/kpi"
+import { useI18n } from "@/lib/i18n/client"
 
 /** A band row being edited. Numeric fields are kept as free-form text so typing digits never gets zero-padded. */
 type EditableBand = { key: string; min: string; max: string; points: string }
@@ -121,6 +122,7 @@ export function KpiProfileEditDialog({
   profile?: KpiProfile
   initialBands?: KpiBandsByMetric
 }) {
+  const { t } = useI18n()
   const [open, setOpen] = useState(false)
   const [name, setName] = useState(profile?.name ?? "")
   const [maxBonusPct, setMaxBonusPct] = useState(profile ? String(Math.round(profile.max_bonus * 10000) / 100) : "20")
@@ -160,19 +162,19 @@ export function KpiProfileEditDialog({
     const minSampleNum = Number.parseInt(minSample, 10)
 
     if (!name.trim()) {
-      toast.error("Zadejte název.")
+      toast.error(t("Zadejte název."))
       return
     }
     if (!Number.isFinite(maxBonus) || maxBonus < 0 || maxBonus > 1.5) {
-      toast.error("Neplatný maximální bonus.")
+      toast.error(t("Neplatný maximální bonus."))
       return
     }
     if (!Number.isFinite(maxPenalty) || maxPenalty < 0 || maxPenalty > 1) {
-      toast.error("Neplatný maximální postih.")
+      toast.error(t("Neplatný maximální postih."))
       return
     }
     if (!Number.isInteger(minSampleNum) || minSampleNum < 0) {
-      toast.error("Neplatný minimální počet žádanek.")
+      toast.error(t("Neplatný minimální počet žádanek."))
       return
     }
 
@@ -194,7 +196,7 @@ export function KpiProfileEditDialog({
         ? await updateKpiProfile(profile.id, name, maxBonus, maxPenalty, minSampleNum, payload)
         : await createKpiProfile(name, maxBonus, maxPenalty, minSampleNum, payload)
       if (res.ok) {
-        toast.success(profile ? "Profil byl aktualizován." : "Profil byl vytvořen.")
+        toast.success(profile ? t("Profil byl aktualizován.") : t("Profil byl vytvořen."))
         setOpen(false)
       } else {
         toast.error(res.error)
@@ -213,7 +215,7 @@ export function KpiProfileEditDialog({
       <DialogTrigger render={trigger} />
       <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{profile ? "Upravit KPI profil" : "Nový KPI profil"}</DialogTitle>
+          <DialogTitle>{profile ? t("Upravit KPI profil") : t("Nový KPI profil")}</DialogTitle>
         </DialogHeader>
         <form
           onSubmit={(e) => {
@@ -224,7 +226,7 @@ export function KpiProfileEditDialog({
         >
           <FieldGroup>
             <Field>
-              <FieldLabel htmlFor="kpi-profile-name">Název</FieldLabel>
+              <FieldLabel htmlFor="kpi-profile-name">{t("Název")}</FieldLabel>
               <Input
                 id="kpi-profile-name"
                 value={name}
@@ -236,7 +238,7 @@ export function KpiProfileEditDialog({
             </Field>
             <div className="grid grid-cols-3 gap-3">
               <Field>
-                <FieldLabel htmlFor="kpi-max-bonus">Max. bonus, %</FieldLabel>
+                <FieldLabel htmlFor="kpi-max-bonus">{t("Max. bonus, %")}</FieldLabel>
                 <Input
                   id="kpi-max-bonus"
                   inputMode="decimal"
@@ -248,7 +250,7 @@ export function KpiProfileEditDialog({
                 />
               </Field>
               <Field>
-                <FieldLabel htmlFor="kpi-max-penalty">Max. postih, %</FieldLabel>
+                <FieldLabel htmlFor="kpi-max-penalty">{t("Max. postih, %")}</FieldLabel>
                 <Input
                   id="kpi-max-penalty"
                   inputMode="decimal"
@@ -260,7 +262,7 @@ export function KpiProfileEditDialog({
                 />
               </Field>
               <Field>
-                <FieldLabel htmlFor="kpi-min-sample">Min. žádanek</FieldLabel>
+                <FieldLabel htmlFor="kpi-min-sample">{t("Min. žádanek")}</FieldLabel>
                 <Input
                   id="kpi-min-sample"
                   inputMode="numeric"
@@ -270,7 +272,7 @@ export function KpiProfileEditDialog({
                   disabled={pending}
                   className="tabular-nums"
                 />
-                <FieldDescription>Méně — koeficient 0,50</FieldDescription>
+                <FieldDescription>{t("Méně — koeficient 0,50")}</FieldDescription>
               </Field>
             </div>
           </FieldGroup>
@@ -280,12 +282,12 @@ export function KpiProfileEditDialog({
               <div key={metric} className="flex flex-col gap-2 rounded-lg border border-border p-3">
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <span className="text-sm font-medium text-foreground">{KPI_METRIC_LABELS[metric]}</span>
-                    <p className="text-xs text-muted-foreground">{KPI_METRIC_HINTS[metric]}</p>
+                    <span className="text-sm font-medium text-foreground">{t(KPI_METRIC_LABELS[metric])}</span>
+                    <p className="text-xs text-muted-foreground">{t(KPI_METRIC_HINTS[metric])}</p>
                   </div>
                   <Button type="button" variant="outline" size="sm" disabled={pending} onClick={() => addRow(metric)}>
                     <Plus data-icon="inline-start" />
-                    Přidat řádek
+                    {t("Přidat řádek")}
                   </Button>
                 </div>
 
@@ -293,35 +295,35 @@ export function KpiProfileEditDialog({
                   {bands[metric].map((row) => (
                     <div key={row.key} className="flex items-center gap-2">
                       <Input
-                        placeholder="od"
+                        placeholder={t("od")}
                         inputMode="decimal"
                         value={row.min}
                         disabled={pending}
                         onChange={(e) => updateRow(metric, row.key, { min: e.target.value })}
                         onFocus={(e) => e.target.select()}
                         className="w-20 tabular-nums"
-                        aria-label="Od"
+                        aria-label={t("Od")}
                       />
                       <span className="text-sm text-muted-foreground">–</span>
                       <Input
-                        placeholder="bez limitu"
+                        placeholder={t("bez limitu")}
                         inputMode="decimal"
                         value={row.max}
                         disabled={pending}
                         onChange={(e) => updateRow(metric, row.key, { max: e.target.value })}
                         onFocus={(e) => e.target.select()}
                         className="w-24 tabular-nums"
-                        aria-label="Do"
+                        aria-label={t("Do")}
                       />
                       <Input
-                        placeholder="body"
+                        placeholder={t("body")}
                         inputMode="decimal"
                         value={row.points}
                         disabled={pending}
                         onChange={(e) => updateRow(metric, row.key, { points: e.target.value })}
                         onFocus={(e) => e.target.select()}
                         className="w-24 tabular-nums"
-                        aria-label="Body"
+                        aria-label={t("Body")}
                       />
                       <Button
                         type="button"
@@ -329,27 +331,30 @@ export function KpiProfileEditDialog({
                         size="icon"
                         disabled={pending}
                         onClick={() => removeRow(metric, row.key)}
-                        aria-label="Smazat řádek"
+                        aria-label={t("Smazat řádek")}
                       >
                         <Trash2 />
                       </Button>
                     </div>
                   ))}
-                  {bands[metric].length === 0 ? <p className="text-sm text-muted-foreground">Žádné řádky.</p> : null}
+                  {bands[metric].length === 0 ? <p className="text-sm text-muted-foreground">{t("Žádné řádky.")}</p> : null}
                 </div>
-                {errors[metric] ? <p className="text-sm text-destructive">{errors[metric]}</p> : null}
+                {errors[metric] ? <p className="text-sm text-destructive">{t(errors[metric])}</p> : null}
               </div>
             ))}
             <p className="text-xs text-muted-foreground">
-              {`K = 1 + součet bodů, v rozmezí od ${(1 - maxPenaltyFrac).toFixed(2)} do ${(1 + maxBonusFrac).toFixed(2)}. Násobí se pouze provize ze zdrojových pravidel; stěry beze změny.`}
+              {t(
+                "K = 1 + součet bodů, v rozmezí od {min} do {max}. Násobí se pouze provize ze zdrojových pravidel; stěry beze změny.",
+                { min: (1 - maxPenaltyFrac).toFixed(2), max: (1 + maxBonusFrac).toFixed(2) },
+              )}
             </p>
           </div>
 
           <DialogFooter>
-            <DialogClose render={<Button type="button" variant="ghost">Zrušit</Button>} />
+            <DialogClose render={<Button type="button" variant="ghost">{t("Zrušit")}</Button>} />
             <Button type="submit" disabled={pending || !name.trim()}>
               {pending ? <Spinner data-icon="inline-start" /> : null}
-              {profile ? "Uložit" : "Vytvořit"}
+              {profile ? t("Uložit") : t("Vytvořit")}
             </Button>
           </DialogFooter>
         </form>

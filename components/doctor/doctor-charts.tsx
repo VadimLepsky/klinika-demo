@@ -20,29 +20,10 @@ import {
   TooltipContent as UiTooltipContent,
   TooltipTrigger as UiTooltipTrigger,
 } from "@/components/ui/tooltip"
-import { formatCoefficient, formatCurrency, formatCurrencyRounded, formatMonth, formatNumber } from "@/lib/format"
+import { useI18n } from "@/lib/i18n/client"
 import { SERIES_COLORS } from "@/lib/category-colors"
 import { cn } from "@/lib/utils"
 import type { DoctorMonthPoint, DoctorMonthStats } from "@/lib/queries/doctor"
-
-const referralsConfig: ChartConfig = {
-  referrals: { label: "Odeslaní pacienti", color: SERIES_COLORS.referrals },
-  referred_base: { label: "Objem žádanek (Kč)", color: SERIES_COLORS.referredSum },
-}
-const commissionConfig: ChartConfig = {
-  commission: { label: "Provize", color: SERIES_COLORS.commission },
-}
-const patientsConfig: ChartConfig = {
-  patients_served: { label: "Ošetřeno pacientů", color: SERIES_COLORS.patients },
-  coefficient: { label: "Koeficient žádanek", color: SERIES_COLORS.coefficient },
-}
-
-const percentFmt = new Intl.NumberFormat("cs-CZ", { minimumFractionDigits: 1, maximumFractionDigits: 1 })
-
-function formatPercent(value: number | null): string {
-  if (value == null) return "—"
-  return `${percentFmt.format(value)}%`
-}
 
 const TILE_CLASS = "flex min-w-0 flex-col justify-center gap-1 rounded-lg border bg-muted/30 px-3 py-3"
 const VALUE_CLASS = "whitespace-nowrap text-xl font-semibold tabular-nums"
@@ -67,22 +48,25 @@ function MetricTile({
   )
 }
 
-function consultLines(stats: DoctorMonthStats | null): ReactNode {
-  if (!stats) return undefined
+function ConsultLines({ stats }: { stats: DoctorMonthStats }) {
+  const { t, formatNumber } = useI18n()
   const { consult_offline_primary, consult_offline_repeat, consult_online_primary, consult_online_repeat } = stats
-  if (consult_offline_primary + consult_offline_repeat + consult_online_primary + consult_online_repeat === 0) {
-    return undefined
-  }
   return (
     <>
-      <span>Konzultace:</span>
+      <span>{t("Konzultace:")}</span>
       <span className="flex items-center gap-1" title="Offline">
         <Building2 className="size-3 shrink-0" aria-label="Offline" />
-        {formatNumber(consult_offline_primary)} prim. · {formatNumber(consult_offline_repeat)} opak.
+        {t("{primary} prim. · {repeat} opak.", {
+          primary: formatNumber(consult_offline_primary),
+          repeat: formatNumber(consult_offline_repeat),
+        })}
       </span>
       <span className="flex items-center gap-1" title="Online">
         <Globe className="size-3 shrink-0" aria-label="Online" />
-        {formatNumber(consult_online_primary)} prim. · {formatNumber(consult_online_repeat)} opak.
+        {t("{primary} prim. · {repeat} opak.", {
+          primary: formatNumber(consult_online_primary),
+          repeat: formatNumber(consult_online_repeat),
+        })}
       </span>
     </>
   )
@@ -94,8 +78,15 @@ function showupColorClass(pct: number): string {
   return "text-status-unmatched-foreground"
 }
 
+function hasConsults(stats: DoctorMonthStats | null): stats is DoctorMonthStats {
+  if (!stats) return false
+  const { consult_offline_primary, consult_offline_repeat, consult_online_primary, consult_online_repeat } = stats
+  return consult_offline_primary + consult_offline_repeat + consult_online_primary + consult_online_repeat > 0
+}
+
 function ShowupTile({ stats }: { stats: DoctorMonthStats | null }) {
-  const label = <span className="text-sm text-muted-foreground">Docházkovost</span>
+  const { t, formatCurrency, formatNumber } = useI18n()
+  const label = <span className="text-sm text-muted-foreground">{t("Docházkovost")}</span>
   const totalSum = stats ? stats.showup_done_sum + stats.showup_cancel_sum : 0
   const hasVisits = stats != null && stats.showup_done_count + stats.showup_cancel_count > 0
 
@@ -121,8 +112,18 @@ function ShowupTile({ stats }: { stats: DoctorMonthStats | null }) {
         }
       />
       <UiTooltipContent>
-        <p>{`Provedeno a zaplaceno: ${formatNumber(stats.showup_done_count)} návštěv (${formatCurrency(stats.showup_done_sum)})`}</p>
-        <p>{`Zrušeno (ztraceno): ${formatNumber(stats.showup_cancel_count)} návštěv (${formatCurrency(stats.showup_cancel_sum)})`}</p>
+        <p>
+          {t("Provedeno a zaplaceno: {count} návštěv ({sum})", {
+            count: formatNumber(stats.showup_done_count),
+            sum: formatCurrency(stats.showup_done_sum),
+          })}
+        </p>
+        <p>
+          {t("Zrušeno (ztraceno): {count} návštěv ({sum})", {
+            count: formatNumber(stats.showup_cancel_count),
+            sum: formatCurrency(stats.showup_cancel_sum),
+          })}
+        </p>
       </UiTooltipContent>
     </UiTooltip>
   )
@@ -135,6 +136,24 @@ export function DoctorCharts({
   series: DoctorMonthPoint[]
   selectedPeriod: string
 }) {
+  const { t, formatCoefficient, formatCompact, formatCurrency, formatCurrencyRounded, formatDecimal, formatMonth, formatNumber } =
+    useI18n()
+  const formatPercent = (value: number | null) => (value == null ? "—" : `${formatDecimal(value)}%`)
+  const referralsLabel = t("Odeslaní pacienti")
+  const baseLabel = t("Objem žádanek (Kč)")
+  const patientsLabel = t("Ošetřeno pacientů")
+  const coefficientLabel = t("Koeficient žádanek")
+  const referralsConfig: ChartConfig = {
+    referrals: { label: referralsLabel, color: SERIES_COLORS.referrals },
+    referred_base: { label: baseLabel, color: SERIES_COLORS.referredSum },
+  }
+  const commissionConfig: ChartConfig = {
+    commission: { label: t("Provize"), color: SERIES_COLORS.commission },
+  }
+  const patientsConfig: ChartConfig = {
+    patients_served: { label: patientsLabel, color: SERIES_COLORS.patients },
+    coefficient: { label: coefficientLabel, color: SERIES_COLORS.coefficient },
+  }
   const [hiddenSeries, setHiddenSeries] = useState<Set<string>>(new Set())
   const data = series.map((p) => ({
     label: formatMonth(p.period),
@@ -156,7 +175,7 @@ export function DoctorCharts({
     <div className="grid grid-cols-1 gap-4 min-[1100px]:grid-cols-2">
       <Card className="flex h-[380px] flex-col">
         <CardHeader>
-          <CardTitle>Odeslaní pacienti a objem žádanek po měsících</CardTitle>
+          <CardTitle>{t("Odeslaní pacienti a objem žádanek po měsících")}</CardTitle>
         </CardHeader>
         <CardContent className="flex-1">
           <ChartContainer config={referralsConfig} className="aspect-auto h-full w-full">
@@ -178,25 +197,21 @@ export function DoctorCharts({
                 axisLine={false}
                 tickMargin={8}
                 width={64}
-                tickFormatter={(value) =>
-                  new Intl.NumberFormat("cs-CZ", { notation: "compact", maximumFractionDigits: 0 }).format(
-                    Number(value),
-                  )
-                }
+                tickFormatter={(value) => formatCompact(Number(value))}
               />
               <ChartTooltip
                 content={
                   <ChartTooltipContent
                     formatter={(value, name, item) => {
                       const key = String(item.dataKey)
-                      const label = key === "referred_base" ? "Objem žádanek (Kč)" : "Odeslaní pacienti"
+                      const label = key === "referred_base" ? baseLabel : referralsLabel
                       return (
                         <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
                           <span className="text-muted-foreground">{label}</span>
                           <span className="font-mono font-medium tabular-nums text-foreground">
                             {key === "referred_base"
                               ? formatCurrency(Number(value))
-                              : new Intl.NumberFormat("cs-CZ").format(Number(value))}
+                              : formatNumber(Number(value))}
                           </span>
                         </div>
                       )
@@ -205,7 +220,7 @@ export function DoctorCharts({
                 }
               />
               <Legend
-                formatter={(value) => (value === "referrals" ? "Odeslaní pacienti" : "Objem žádanek (Kč)")}
+                formatter={(value) => (value === "referrals" ? referralsLabel : baseLabel)}
                 onClick={(entry) => {
                   const key = String(entry.dataKey)
                   setHiddenSeries((current) => {
@@ -243,7 +258,7 @@ export function DoctorCharts({
 
       <Card className="flex h-[380px] flex-col">
         <CardHeader>
-          <CardTitle>Provize po měsících</CardTitle>
+          <CardTitle>{t("Provize po měsících")}</CardTitle>
         </CardHeader>
         <CardContent className="flex-1">
           <ChartContainer config={commissionConfig} className="aspect-auto h-full w-full">
@@ -255,7 +270,7 @@ export function DoctorCharts({
                 axisLine={false}
                 tickMargin={8}
                 width={64}
-                tickFormatter={(v) => new Intl.NumberFormat("cs-CZ", { notation: "compact" }).format(Number(v))}
+                tickFormatter={(v) => formatCompact(Number(v))}
               />
               <ChartTooltip content={<ChartTooltipContent formatter={(value) => formatCurrency(Number(value))} />} />
               <Line
@@ -273,7 +288,7 @@ export function DoctorCharts({
 
       <Card className="flex h-[380px] flex-col">
         <CardHeader>
-          <CardTitle>Pacienti a koeficient</CardTitle>
+          <CardTitle>{t("Pacienti a koeficient")}</CardTitle>
         </CardHeader>
         <CardContent className="flex-1">
           <ChartContainer config={patientsConfig} className="aspect-auto h-full w-full">
@@ -295,14 +310,14 @@ export function DoctorCharts({
                 axisLine={false}
                 tickMargin={8}
                 width={56}
-                tickFormatter={(value) => `${new Intl.NumberFormat("cs-CZ").format(Number(value))}%`}
+                tickFormatter={(value) => `${formatNumber(Number(value))}%`}
               />
               <ChartTooltip
                 content={
                   <ChartTooltipContent
                     formatter={(value, name, item) => {
                       const key = String(item.dataKey)
-                      const label = key === "coefficient" ? "Koeficient žádanek" : "Ošetřeno pacientů"
+                      const label = key === "coefficient" ? coefficientLabel : patientsLabel
                       return (
                         <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
                           <span className="text-muted-foreground">{label}</span>
@@ -316,7 +331,7 @@ export function DoctorCharts({
                 }
               />
               <Legend
-                formatter={(value) => (value === "patients_served" ? "Ošetřeno pacientů" : "Koeficient žádanek")}
+                formatter={(value) => (value === "patients_served" ? patientsLabel : coefficientLabel)}
                 onClick={(entry) => {
                   const key = String(entry.dataKey)
                   setHiddenSeries((current) => {
@@ -355,45 +370,47 @@ export function DoctorCharts({
 
       <Card className="flex h-[380px] flex-col">
         <CardHeader>
-          <CardTitle>Ukazatele za období</CardTitle>
+          <CardTitle>{t("Ukazatele za období")}</CardTitle>
         </CardHeader>
         <CardContent className="flex-1">
           <div className="grid h-full grid-cols-3 grid-rows-2 gap-4">
             <MetricTile
-              label="Odeslaní pacienti"
+              label={referralsLabel}
               value={stats ? formatNumber(stats.referred_patients) : "—"}
               secondary={
                 stats ? (
                   <>
-                    <span>{`koeficient ${formatCoefficient(stats.referred_patients, stats.patients_served)}`}</span>
-                    <span>{`Žádanky celkem: ${formatNumber(stats.referrals)}`}</span>
+                    <span>{t("koeficient {value}", { value: formatCoefficient(stats.referred_patients, stats.patients_served) })}</span>
+                    <span>{t("Žádanky celkem: {n}", { n: formatNumber(stats.referrals) })}</span>
                   </>
                 ) : undefined
               }
               gapStyle="3px"
             />
             <MetricTile
-              label="Pacientů"
+              label={t("Pacientů")}
               value={stats ? formatNumber(stats.patients_served) : "—"}
-              secondary={consultLines(stats)}
-              gapStyle={consultLines(stats) ? "3px" : "18px"}
+              secondary={hasConsults(stats) ? <ConsultLines stats={stats} /> : undefined}
+              gapStyle={hasConsults(stats) ? "3px" : "18px"}
             />
             <ShowupTile stats={stats} />
             <MetricTile
-              label="Prům. hodnota žádanky"
+              label={t("Prům. hodnota žádanky")}
               value={stats && avgCheck != null ? formatCurrencyRounded(avgCheck) : "—"}
               gapStyle="18px"
             />
             <MetricTile
-              label="Prům. částka na pacienta"
+              label={t("Prům. částka na pacienta")}
               value={stats && avgPerPatient != null ? formatCurrencyRounded(avgPerPatient) : "—"}
               gapStyle="18px"
             />
             <MetricTile
-              label="Přeobjednání"
+              label={t("Přeobjednání")}
               value={stats ? formatNumber(stats.self_records) : "—"}
               secondary={
-                stats ? `koeficient ${formatCoefficient(stats.self_records, stats.visits_performed)}` : undefined
+                stats
+                  ? t("koeficient {value}", { value: formatCoefficient(stats.self_records, stats.visits_performed) })
+                  : undefined
               }
               gapStyle="3px"
             />

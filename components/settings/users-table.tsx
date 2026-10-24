@@ -19,13 +19,13 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { InviteUserDialog } from "@/components/settings/invite-user-dialog"
 import { DeleteUserButton } from "@/components/settings/delete-user-button"
 import { changeUserRole } from "@/app/(app)/settings/users/actions"
-import { formatDateTime } from "@/lib/format"
+import { useI18n } from "@/lib/i18n/client"
 import type { AppUser } from "@/lib/queries/users"
 import type { Role } from "@/lib/session"
 
-const ROLE_ITEMS = { admin: "Administrátor", viewer: "Prohlížení" }
-
 function RoleCell({ user, isSelf }: { user: AppUser; isSelf: boolean }) {
+  const { t } = useI18n()
+  const ROLE_ITEMS = { admin: t("Administrátor"), viewer: t("Prohlížení") }
   const [role, setRole] = useState<Role>(user.role)
   const [pending, startTransition] = useTransition()
 
@@ -36,7 +36,7 @@ function RoleCell({ user, isSelf }: { user: AppUser; isSelf: boolean }) {
     startTransition(async () => {
       const res = await changeUserRole(user.id, next)
       if (res.ok) {
-        toast.success(`Role «${user.full_name}» byla aktualizována.`)
+        toast.success(t("Role «{name}» byla aktualizována.", { name: user.full_name }))
       } else {
         setRole(prev)
         toast.error(res.error)
@@ -51,8 +51,8 @@ function RoleCell({ user, isSelf }: { user: AppUser; isSelf: boolean }) {
       </SelectTrigger>
       <SelectContent>
         <SelectGroup>
-          <SelectItem value="admin">Administrátor</SelectItem>
-          <SelectItem value="viewer">Prohlížení</SelectItem>
+          <SelectItem value="admin">{t("Administrátor")}</SelectItem>
+          <SelectItem value="viewer">{t("Prohlížení")}</SelectItem>
         </SelectGroup>
       </SelectContent>
     </Select>
@@ -62,7 +62,7 @@ function RoleCell({ user, isSelf }: { user: AppUser; isSelf: boolean }) {
     return (
       <Tooltip>
         <TooltipTrigger render={<span className="inline-block cursor-not-allowed" />}>{select}</TooltipTrigger>
-        <TooltipContent>Nelze změnit vlastní roli</TooltipContent>
+        <TooltipContent>{t("Nelze změnit vlastní roli")}</TooltipContent>
       </Tooltip>
     )
   }
@@ -70,6 +70,7 @@ function RoleCell({ user, isSelf }: { user: AppUser; isSelf: boolean }) {
 }
 
 export function UsersTable({ users, currentUserId }: { users: AppUser[]; currentUserId: string }) {
+  const { t, formatDateTime } = useI18n()
   const router = useRouter()
   const adminCount = users.filter((u) => u.role === "admin").length
 
@@ -82,7 +83,7 @@ export function UsersTable({ users, currentUserId }: { users: AppUser[]; current
           trigger={
             <Button size="sm">
               <UserPlus data-icon="inline-start" />
-              Pozvat uživatele
+              {t("Pozvat uživatele")}
             </Button>
           }
         />
@@ -92,13 +93,13 @@ export function UsersTable({ users, currentUserId }: { users: AppUser[]; current
         <Table className="table-fixed w-full min-w-[820px]">
           <TableHeader>
             <TableRow>
-              <TableHead className="pl-4">Uživatel</TableHead>
-              <TableHead className="w-[230px]">E-mail</TableHead>
-              <TableHead className="w-[200px]">Role</TableHead>
-              <TableHead className="w-[150px]">Přidán</TableHead>
-              <TableHead className="w-[160px]">Pozval</TableHead>
+              <TableHead className="pl-4">{t("Uživatel")}</TableHead>
+              <TableHead className="w-[230px]">{t("E-mail")}</TableHead>
+              <TableHead className="w-[200px]">{t("Role")}</TableHead>
+              <TableHead className="w-[150px]">{t("Přidán")}</TableHead>
+              <TableHead className="w-[160px]">{t("Pozval")}</TableHead>
               <TableHead className="w-[56px] pr-4 text-right">
-                <span className="sr-only">Akce</span>
+                <span className="sr-only">{t("Akce")}</span>
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -109,9 +110,9 @@ export function UsersTable({ users, currentUserId }: { users: AppUser[]; current
                 const isLastAdmin = u.role === "admin" && adminCount <= 1
                 const inviter = u.inviter_name ?? u.inviter_email
                 const deleteDisabledReason = isSelf
-                  ? "Nelze smazat vlastní účet"
+                  ? t("Nelze smazat vlastní účet")
                   : isLastAdmin
-                    ? "Nelze smazat posledního administrátora"
+                    ? t("Nelze smazat posledního administrátora")
                     : undefined
                 return (
                   <TableRow key={u.id}>
@@ -120,7 +121,7 @@ export function UsersTable({ users, currentUserId }: { users: AppUser[]; current
                         <span className="truncate">{u.full_name}</span>
                         {isSelf ? (
                           <Badge variant="outline" className="shrink-0">
-                            Vy
+                            {t("Vy")}
                           </Badge>
                         ) : null}
                       </span>
@@ -151,7 +152,7 @@ export function UsersTable({ users, currentUserId }: { users: AppUser[]; current
             ) : (
               <TableRow>
                 <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
-                  Žádní uživatelé.
+                  {t("Žádní uživatelé.")}
                 </TableCell>
               </TableRow>
             )}

@@ -1,6 +1,7 @@
 import "server-only"
 import { db } from "@/lib/demo/store"
-import { formatMonth, nextMonthValue, periodKey } from "@/lib/format"
+import { nextMonthValue, periodKey } from "@/lib/format"
+import { getI18n } from "@/lib/i18n/server"
 import { emptyKpiBandsByMetric, type KpiBand, type KpiBandsByMetric, type KpiMetric } from "@/lib/kpi"
 
 export type MonthOption = { value: string; label: string }
@@ -12,6 +13,7 @@ export type MonthOption = { value: string; label: string }
 export async function getKpiAssignableMonths(): Promise<MonthOption[]> {
   const state = db()
   if (state.periods.length === 0) return []
+  const { formatMonth } = await getI18n()
 
   const sorted = [...state.periods].sort((a, b) => (a.period < b.period ? -1 : 1))
   const frozenMonths = new Set(sorted.filter((p) => p.status === "frozen").map((p) => periodKey(p.period).slice(0, 7)))

@@ -1,97 +1,168 @@
-// cs-CZ formatting helpers. Currency: "25 792,89 Kč", dates: "01.06.2026".
+import type { Locale } from "@/lib/i18n/config"
 
-const currencyFmt = new Intl.NumberFormat("cs-CZ", {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-})
+// Locale-aware formatting. Amounts stay in Czech crowns in every language —
+// only the number grouping changes: cs "25 792,89 Kč", en "25,792.89 Kč".
+// Dates: cs "01.06.2026", en "01/06/2026".
 
-const intFmt = new Intl.NumberFormat("cs-CZ", { maximumFractionDigits: 0 })
+const INTL_LOCALE: Record<Locale, string> = { cs: "cs-CZ", en: "en-GB" }
 
-export function formatCurrency(value: number | string | null | undefined): string {
-  const n = typeof value === "string" ? Number.parseFloat(value) : (value ?? 0)
-  if (!Number.isFinite(n)) return "—"
-  return `${currencyFmt.format(n)} Kč`
+const MONTHS: Record<Locale, string[]> = {
+  cs: [
+    "Leden",
+    "Únor",
+    "Březen",
+    "Duben",
+    "Květen",
+    "Červen",
+    "Červenec",
+    "Srpen",
+    "Září",
+    "Říjen",
+    "Listopad",
+    "Prosinec",
+  ],
+  en: [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ],
 }
 
-export function formatNumber(value: number | string | null | undefined): string {
-  const n = typeof value === "string" ? Number.parseFloat(value) : (value ?? 0)
-  if (!Number.isFinite(n)) return "—"
-  return intFmt.format(n)
+function toNumber(value: number | string | null | undefined): number {
+  return typeof value === "string" ? Number.parseFloat(value) : (value ?? 0)
 }
 
-/** Whole crowns, no haléře — for KPI cards and stat tiles where width matters. */
-export function formatCurrencyRounded(value: number | string | null | undefined): string {
-  const n = typeof value === "string" ? Number.parseFloat(value) : (value ?? 0)
-  if (!Number.isFinite(n)) return "—"
-  return `${intFmt.format(Math.round(n))} Kč`
+function toDate(value: string | Date): Date {
+  return typeof value === "string" ? new Date(value) : value
 }
 
-/** Rate stored as 0.07 => "7%". */
-export function formatRate(rate: number | string | null | undefined): string {
-  const n = typeof rate === "string" ? Number.parseFloat(rate) : (rate ?? 0)
-  if (!Number.isFinite(n)) return "—"
-  const pct = n * 100
-  return `${intFmt.format(Number(pct.toFixed(2)))}%`
+function buildFormatters(locale: Locale) {
+  const intl = INTL_LOCALE[locale]
+  const currencyFmt = new Intl.NumberFormat(intl, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  const intFmt = new Intl.NumberFormat(intl, { maximumFractionDigits: 0 })
+  const compactFmt = new Intl.NumberFormat(intl, { notation: "compact", maximumFractionDigits: 0 })
+  const oneDecimalFmt = new Intl.NumberFormat(intl, { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+  const dateSep = locale === "cs" ? "." : "/"
+  // Pinned to the clinic's timezone so server and client render identically
+  // (an unpinned toLocaleString renders UTC on the server, local time in the
+  // browser, which causes a React hydration mismatch).
+  const dateTimeFmt = new Intl.DateTimeFormat(intl, {
+    timeZone: "Europe/Prague",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  })
+
+  function formatCurrency(value: number | string | null | undefined): string {
+    const n = toNumber(value)
+    if (!Number.isFinite(n)) return "—"
+    return `${currencyFmt.format(n)} Kč`
+  }
+
+  function formatNumber(value: number | string | null | undefined): string {
+    const n = toNumber(value)
+    if (!Number.isFinite(n)) return "—"
+    return intFmt.format(n)
+  }
+
+  /** Chart axis ticks: "12 tis." / "12K". */
+  function formatCompact(value: number | string | null | undefined): string {
+    const n = toNumber(value)
+    if (!Number.isFinite(n)) return "—"
+    return compactFmt.format(n)
+  }
+
+  function formatDecimal(value: number | string | null | undefined): string {
+    const n = toNumber(value)
+    if (!Number.isFinite(n)) return "—"
+    return oneDecimalFmt.format(n)
+  }
+
+  /** Whole crowns, no haléře — for KPI cards and stat tiles where width matters. */
+  function formatCurrencyRounded(value: number | string | null | undefined): string {
+    const n = toNumber(value)
+    if (!Number.isFinite(n)) return "—"
+    return `${intFmt.format(Math.round(n))} Kč`
+  }
+
+  /** Rate stored as 0.07 => "7%". */
+  function formatRate(rate: number | string | null | undefined): string {
+    const n = toNumber(rate)
+    if (!Number.isFinite(n)) return "—"
+    const pct = n * 100
+    return `${intFmt.format(Number(pct.toFixed(2)))}%`
+  }
+
+  /** referrals ÷ patients_served as %, may exceed 100. */
+  function formatCoefficient(referrals: number, patientsServed: number): string {
+    if (!patientsServed) return "—"
+    const pct = (referrals / patientsServed) * 100
+    return `${intFmt.format(Math.round(pct))}%`
+  }
+
+  /** "2026-06-01" (or Date) => "01.06.2026" / "01/06/2026". */
+  function formatDate(value: string | Date | null | undefined): string {
+    if (!value) return "—"
+    const d = toDate(value)
+    if (Number.isNaN(d.getTime())) return "—"
+    const dd = String(d.getUTCDate()).padStart(2, "0")
+    const mm = String(d.getUTCMonth() + 1).padStart(2, "0")
+    const yyyy = d.getUTCFullYear()
+    return `${dd}${dateSep}${mm}${dateSep}${yyyy}`
+  }
+
+  /** "2026-06-01" => "Červen 2026" / "June 2026". */
+  function formatMonth(value: string | Date | null | undefined): string {
+    if (!value) return "—"
+    const d = toDate(value)
+    if (Number.isNaN(d.getTime())) return "—"
+    return `${MONTHS[locale][d.getUTCMonth()]} ${d.getUTCFullYear()}`
+  }
+
+  function formatDateTime(value: string | Date | null | undefined): string {
+    if (!value) return "—"
+    const d = toDate(value)
+    if (Number.isNaN(d.getTime())) return "—"
+    const s = dateTimeFmt.format(d).replace(", ", " ")
+    return locale === "cs" ? s.replace(/\.\s+/g, ".") : s
+  }
+
+  return {
+    formatCurrency,
+    formatCurrencyRounded,
+    formatNumber,
+    formatCompact,
+    formatDecimal,
+    formatRate,
+    formatCoefficient,
+    formatDate,
+    formatMonth,
+    formatDateTime,
+  }
 }
 
-/** referrals ÷ patients_served as %, may exceed 100. */
-export function formatCoefficient(referrals: number, patientsServed: number): string {
-  if (!patientsServed) return "—"
-  const pct = (referrals / patientsServed) * 100
-  return `${intFmt.format(Math.round(pct))}%`
-}
+export type Formatters = ReturnType<typeof buildFormatters>
 
-/** "2026-06-01" (or Date) => "01.06.2026". */
-export function formatDate(value: string | Date | null | undefined): string {
-  if (!value) return "—"
-  const d = typeof value === "string" ? new Date(value) : value
-  if (Number.isNaN(d.getTime())) return "—"
-  const dd = String(d.getUTCDate()).padStart(2, "0")
-  const mm = String(d.getUTCMonth() + 1).padStart(2, "0")
-  const yyyy = d.getUTCFullYear()
-  return `${dd}.${mm}.${yyyy}`
-}
+const cache = new Map<Locale, Formatters>()
 
-/** "2026-06-01" => "Červen 2026". */
-const MONTHS_CS = [
-  "Leden",
-  "Únor",
-  "Březen",
-  "Duben",
-  "Květen",
-  "Červen",
-  "Červenec",
-  "Srpen",
-  "Září",
-  "Říjen",
-  "Listopad",
-  "Prosinec",
-]
-
-export function formatMonth(value: string | Date | null | undefined): string {
-  if (!value) return "—"
-  const d = typeof value === "string" ? new Date(value) : value
-  if (Number.isNaN(d.getTime())) return "—"
-  return `${MONTHS_CS[d.getUTCMonth()]} ${d.getUTCFullYear()}`
-}
-
-// Pinned to the clinic's timezone so server and client render identically
-// (an unpinned toLocaleString renders UTC on the server, local time in the
-// browser, which causes a React hydration mismatch).
-const dateTimeFmt = new Intl.DateTimeFormat("cs-CZ", {
-  timeZone: "Europe/Prague",
-  day: "2-digit",
-  month: "2-digit",
-  year: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-})
-
-export function formatDateTime(value: string | Date | null | undefined): string {
-  if (!value) return "—"
-  const d = typeof value === "string" ? new Date(value) : value
-  if (Number.isNaN(d.getTime())) return "—"
-  return dateTimeFmt.format(d).replace(", ", " ").replace(/\.\s+/g, ".")
+export function getFormatters(locale: Locale): Formatters {
+  let f = cache.get(locale)
+  if (!f) {
+    f = buildFormatters(locale)
+    cache.set(locale, f)
+  }
+  return f
 }
 
 /** First day of next month as "YYYY-MM" (for month <input>). */

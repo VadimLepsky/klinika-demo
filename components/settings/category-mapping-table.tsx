@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { BucketSelect } from "@/components/settings/bucket-select"
 import { mapCategory } from "@/app/(app)/attention/actions"
 import { nextMonthValue, monthInputToDate } from "@/lib/format"
+import { useI18n } from "@/lib/i18n/client"
 import type { CategoryMappingRow } from "@/lib/queries/settings"
 import type { BucketOption } from "@/lib/queries/attention"
 
@@ -23,6 +24,7 @@ function CategoryRowItem({
   row: CategoryMappingRow
   buckets: BucketOption[]
 }) {
+  const { t } = useI18n()
   const [selected, setSelected] = useState(row.bucket ?? NON_COMMISSION)
   const [pending, startTransition] = useTransition()
 
@@ -33,15 +35,15 @@ function CategoryRowItem({
     const bucket = selected === NON_COMMISSION ? null : selected
     startTransition(async () => {
       const res = await mapCategory(row.category_id, bucket, monthInputToDate(nextMonthValue()))
-      if (res.ok) toast.success(`Kategorie «${row.category_name}» byla aktualizována.`)
+      if (res.ok) toast.success(t("Kategorie «{name}» byla aktualizována.", { name: t(row.category_name) }))
       else toast.error(res.error)
     })
   }
 
   return (
     <TableRow>
-      <TableCell className="max-w-0 truncate pl-4 font-medium text-foreground" title={row.category_name}>
-        {row.category_name}
+      <TableCell className="max-w-0 truncate pl-4 font-medium text-foreground" title={t(row.category_name)}>
+        {t(row.category_name)}
       </TableCell>
       <TableCell>
         <BucketSelect
@@ -49,13 +51,13 @@ function CategoryRowItem({
           value={selected}
           onValueChange={setSelected}
           disabled={pending}
-          extraOptions={[{ value: NON_COMMISSION, label: "Bez provize" }]}
+          extraOptions={[{ value: NON_COMMISSION, label: t("Bez provize") }]}
         />
       </TableCell>
       <TableCell className="whitespace-nowrap text-right pr-4">
         <Button size="sm" onClick={save} disabled={pending || !dirty}>
           {pending ? <Spinner data-icon="inline-start" /> : null}
-          Uložit
+          {t("Uložit")}
         </Button>
       </TableCell>
     </TableRow>
@@ -69,12 +71,15 @@ export function CategoryMappingTable({
   rows: CategoryMappingRow[]
   buckets: BucketOption[]
 }) {
+  const { t } = useI18n()
   const [q, setQ] = useState("")
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase()
     if (!needle) return rows
-    return rows.filter((r) => r.category_name.toLowerCase().includes(needle))
-  }, [q, rows])
+    return rows.filter(
+      (r) => r.category_name.toLowerCase().includes(needle) || t(r.category_name).toLowerCase().includes(needle),
+    )
+  }, [q, rows, t])
 
   return (
     <div className="flex flex-col gap-4">
@@ -83,7 +88,7 @@ export function CategoryMappingTable({
           <InputGroupInput
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Hledat kategorii…"
+            placeholder={t("Hledat kategorii…")}
           />
           <InputGroupAddon>
             <Search />
@@ -95,9 +100,9 @@ export function CategoryMappingTable({
         <Table className="table-fixed w-full min-w-[680px]">
           <TableHeader>
             <TableRow>
-              <TableHead className="pl-4">Kategorie</TableHead>
-              <TableHead className="w-[240px]">Pravidlo</TableHead>
-              <TableHead className="w-[110px] text-right pr-4">Akce</TableHead>
+              <TableHead className="pl-4">{t("Kategorie")}</TableHead>
+              <TableHead className="w-[240px]">{t("Pravidlo")}</TableHead>
+              <TableHead className="w-[110px] text-right pr-4">{t("Akce")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -108,7 +113,7 @@ export function CategoryMappingTable({
             ) : (
               <TableRow>
                 <TableCell colSpan={3} className="py-8 text-center text-muted-foreground">
-                  Dotazu neodpovídá žádná kategorie.
+                  {t("Dotazu neodpovídá žádná kategorie.")}
                 </TableCell>
               </TableRow>
             )}

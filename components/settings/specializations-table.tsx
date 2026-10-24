@@ -34,11 +34,13 @@ import { deleteSpecialization, setSpecializationActive } from "@/app/(app)/setti
 import { SpecializationEditDialog } from "@/components/settings/specialization-edit-dialog"
 import { getBandRangeLabel, getBandSwatchClassName, type CoefficientBand } from "@/lib/coefficient"
 import type { SpecializationWithCount } from "@/lib/queries/specializations"
+import { useI18n } from "@/lib/i18n/client"
 
 const ASSIGNED_TOOLTIP = "Nejprve specializaci odeberte lékařům nebo ji deaktivujte."
 
 function BandsPreview({ bands }: { bands: CoefficientBand[] }) {
-  if (bands.length === 0) return <span className="text-sm text-muted-foreground">Výchozí</span>
+  const { t } = useI18n()
+  if (bands.length === 0) return <span className="text-sm text-muted-foreground">{t("Výchozí")}</span>
   const sorted = [...bands].sort((a, b) => a.min_pct - b.min_pct)
   return (
     <Tooltip>
@@ -58,7 +60,7 @@ function BandsPreview({ bands }: { bands: CoefficientBand[] }) {
       <TooltipContent>
         <div className="flex flex-col gap-1">
           {sorted.map((b, i) => (
-            <span key={i}>{getBandRangeLabel(b, sorted)}</span>
+            <span key={i}>{getBandRangeLabel(b, sorted, t)}</span>
           ))}
         </div>
       </TooltipContent>
@@ -79,6 +81,7 @@ export function SpecializationNameDialog({
   onSubmit: (name: string) => Promise<{ ok: true } | { ok: false; error: string }>
   successMessage: string
 }) {
+  const { t } = useI18n()
   const [open, setOpen] = useState(false)
   const [name, setName] = useState(initialName)
   const [pending, startTransition] = useTransition()
@@ -117,7 +120,7 @@ export function SpecializationNameDialog({
         >
           <FieldGroup>
             <Field>
-              <FieldLabel htmlFor="specialization-name">Název</FieldLabel>
+              <FieldLabel htmlFor="specialization-name">{t("Název")}</FieldLabel>
               <Input
                 id="specialization-name"
                 value={name}
@@ -129,10 +132,10 @@ export function SpecializationNameDialog({
             </Field>
           </FieldGroup>
           <DialogFooter>
-            <DialogClose render={<Button type="button" variant="ghost">Zrušit</Button>} />
+            <DialogClose render={<Button type="button" variant="ghost">{t("Zrušit")}</Button>} />
             <Button type="submit" disabled={pending || !name.trim()}>
               {pending ? <Spinner data-icon="inline-start" /> : null}
-              Uložit
+              {t("Uložit")}
             </Button>
           </DialogFooter>
         </form>
@@ -142,6 +145,7 @@ export function SpecializationNameDialog({
 }
 
 function DeleteButton({ spec }: { spec: SpecializationWithCount }) {
+  const { t } = useI18n()
   const [pending, startTransition] = useTransition()
   const assigned = spec.doctor_count > 0
 
@@ -153,12 +157,12 @@ function DeleteButton({ spec }: { spec: SpecializationWithCount }) {
             <span tabIndex={0} className="inline-flex">
               <Button variant="outline" size="sm" disabled className="pointer-events-none">
                 <Trash2 data-icon="inline-start" />
-                Smazat
+                {t("Smazat")}
               </Button>
             </span>
           }
         />
-        <TooltipContent>{ASSIGNED_TOOLTIP}</TooltipContent>
+        <TooltipContent>{t(ASSIGNED_TOOLTIP)}</TooltipContent>
       </Tooltip>
     )
   }
@@ -169,28 +173,28 @@ function DeleteButton({ spec }: { spec: SpecializationWithCount }) {
         render={
           <Button variant="outline" size="sm" disabled={pending}>
             {pending ? <Spinner data-icon="inline-start" /> : <Trash2 data-icon="inline-start" />}
-            Smazat
+            {t("Smazat")}
           </Button>
         }
       />
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Smazat specializaci «{spec.name}»?</AlertDialogTitle>
-          <AlertDialogDescription>Tuto akci nelze vrátit zpět.</AlertDialogDescription>
+          <AlertDialogTitle>{t("Smazat specializaci «{name}»?", { name: t(spec.name) })}</AlertDialogTitle>
+          <AlertDialogDescription>{t("Tuto akci nelze vrátit zpět.")}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Zrušit</AlertDialogCancel>
+          <AlertDialogCancel>{t("Zrušit")}</AlertDialogCancel>
           <AlertDialogAction
             variant="destructive"
             onClick={() =>
               startTransition(async () => {
                 const res = await deleteSpecialization(spec.id)
-                if (res.ok) toast.success(`Specializace «${spec.name}» byla smazána.`)
+                if (res.ok) toast.success(t("Specializace «{name}» byla smazána.", { name: t(spec.name) }))
                 else toast.error(res.error)
               })
             }
           >
-            Smazat
+            {t("Smazat")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -199,6 +203,7 @@ function DeleteButton({ spec }: { spec: SpecializationWithCount }) {
 }
 
 function ToggleActiveButton({ spec }: { spec: SpecializationWithCount }) {
+  const { t } = useI18n()
   const [pending, startTransition] = useTransition()
   return (
     <Button
@@ -208,13 +213,14 @@ function ToggleActiveButton({ spec }: { spec: SpecializationWithCount }) {
       onClick={() =>
         startTransition(async () => {
           const res = await setSpecializationActive(spec.id, !spec.active)
-          if (res.ok) toast.success(spec.active ? "Specializace byla deaktivována." : "Specializace byla aktivována.")
+          if (res.ok)
+            toast.success(spec.active ? t("Specializace byla deaktivována.") : t("Specializace byla aktivována."))
           else toast.error(res.error)
         })
       }
     >
       {pending ? <Spinner data-icon="inline-start" /> : null}
-      {spec.active ? "Deaktivovat" : "Aktivovat"}
+      {spec.active ? t("Deaktivovat") : t("Aktivovat")}
     </Button>
   )
 }
@@ -226,16 +232,17 @@ export function SpecializationsTable({
   specializations: SpecializationWithCount[]
   bandsBySpecialization: Map<string, CoefficientBand[]>
 }) {
+  const { t } = useI18n()
   return (
     <div className="overflow-x-auto rounded-lg border border-border">
       <Table className="w-full min-w-[820px]">
         <TableHeader>
           <TableRow>
-            <TableHead className="pl-4">Název</TableHead>
-            <TableHead className="w-[100px] text-right">Lékařů</TableHead>
-            <TableHead className="w-[140px]">Stav</TableHead>
-            <TableHead className="w-[140px]">Prahy</TableHead>
-            <TableHead className="w-[300px] pr-4 text-right">Akce</TableHead>
+            <TableHead className="pl-4">{t("Název")}</TableHead>
+            <TableHead className="w-[100px] text-right">{t("Lékařů")}</TableHead>
+            <TableHead className="w-[140px]">{t("Stav")}</TableHead>
+            <TableHead className="w-[140px]">{t("Prahy")}</TableHead>
+            <TableHead className="w-[300px] pr-4 text-right">{t("Akce")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -244,14 +251,14 @@ export function SpecializationsTable({
               const bands = bandsBySpecialization.get(s.id) ?? []
               return (
                 <TableRow key={s.id}>
-                  <TableCell className="pl-4 font-medium text-foreground">{s.name}</TableCell>
+                  <TableCell className="pl-4 font-medium text-foreground">{t(s.name)}</TableCell>
                   <TableCell className="text-right tabular-nums">{s.doctor_count}</TableCell>
                   <TableCell>
                     {s.active ? (
-                      <Badge variant="secondary">Aktivní</Badge>
+                      <Badge variant="secondary">{t("Aktivní")}</Badge>
                     ) : (
                       <Badge variant="outline" className="text-muted-foreground">
-                        Neaktivní
+                        {t("Neaktivní")}
                       </Badge>
                     )}
                   </TableCell>
@@ -267,7 +274,7 @@ export function SpecializationsTable({
                         trigger={
                           <Button variant="outline" size="sm">
                             <Pencil data-icon="inline-start" />
-                            Upravit
+                            {t("Upravit")}
                           </Button>
                         }
                       />
@@ -281,7 +288,7 @@ export function SpecializationsTable({
           ) : (
             <TableRow>
               <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
-                Zatím žádná specializace.
+                {t("Zatím žádná specializace.")}
               </TableCell>
             </TableRow>
           )}

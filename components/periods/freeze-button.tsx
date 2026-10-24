@@ -18,19 +18,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { freezePeriod } from "@/app/(app)/periods/actions"
-import { formatMonth } from "@/lib/format"
+import { blockerLines } from "@/components/periods/blocker-summary"
+import { useI18n } from "@/lib/i18n/client"
 import type { PeriodBlockers } from "@/lib/queries/periods"
-
-function blockerLines(b: PeriodBlockers): { text: string; href?: string }[] {
-  const out: { text: string; href?: string }[] = []
-  if (b.pendingReview > 0) out.push({ text: `Vyžaduje pozornost: ${b.pendingReview} pol.` })
-  if (b.unmatched > 0) out.push({ text: `Nerozpoznáno: ${b.unmatched} pol.`, href: "/attention#unmatched" })
-  if (b.unmappedSources > 0)
-    out.push({ text: `Nepřiřazené zdroje: ${b.unmappedSources}`, href: "/attention#sources" })
-  if (b.unflaggedStaff > 0)
-    out.push({ text: `Neoznačení zaměstnanci: ${b.unflaggedStaff}`, href: "/attention#staff" })
-  return out
-}
 
 export function FreezeButton({
   period,
@@ -43,6 +33,7 @@ export function FreezeButton({
   canFreeze: boolean
   blockers: PeriodBlockers
 }) {
+  const { t, formatMonth } = useI18n()
   const [open, setOpen] = useState(false)
   const [pending, startTransition] = useTransition()
 
@@ -50,18 +41,18 @@ export function FreezeButton({
     return (
       <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
         <Lock className="size-3.5" />
-        Uzavřeno
+        {t("Uzavřeno")}
       </span>
     )
   }
 
-  const reasons = blockerLines(blockers)
+  const reasons = blockerLines(blockers, t)
 
   const confirm = () => {
     startTransition(async () => {
       const res = await freezePeriod(period)
       if (res.ok) {
-        toast.success(`${formatMonth(period)} bylo uzavřeno.`)
+        toast.success(t("{month} bylo uzavřeno.", { month: formatMonth(period) }))
         setOpen(false)
       } else {
         toast.error(res.error)
@@ -77,13 +68,13 @@ export function FreezeButton({
             <span tabIndex={0} className="inline-block">
               <Button size="sm" variant="outline" disabled>
                 <Snowflake data-icon="inline-start" />
-                Uzavřít
+                {t("Uzavřít")}
               </Button>
             </span>
           }
         />
         <TooltipContent className="max-w-xs">
-          <span className="block font-medium">Uzavření není možné:</span>
+          <span className="block font-medium">{t("Uzavření není možné:")}</span>
           <ul className="mt-1 list-disc pl-4">
             {reasons.map((r) =>
               r.href ? (
@@ -106,21 +97,21 @@ export function FreezeButton({
     <>
       <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
         <Snowflake data-icon="inline-start" />
-        Uzavřít
+        {t("Uzavřít")}
       </Button>
       <AlertDialog open={open} onOpenChange={setOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Uzavřít {formatMonth(period)}?</AlertDialogTitle>
+            <AlertDialogTitle>{t("Uzavřít {month}?", { month: formatMonth(period) })}</AlertDialogTitle>
             <AlertDialogDescription>
-              Měsíc bude uzamčen. Přepočet už nebude možný.
+              {t("Měsíc bude uzamčen. Přepočet už nebude možný.")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={pending}>Zrušit</AlertDialogCancel>
+            <AlertDialogCancel disabled={pending}>{t("Zrušit")}</AlertDialogCancel>
             <AlertDialogAction onClick={confirm} disabled={pending}>
               {pending ? <Spinner data-icon="inline-start" /> : null}
-              Uzavřít
+              {t("Uzavřít")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

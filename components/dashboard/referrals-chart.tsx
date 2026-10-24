@@ -14,17 +14,19 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart"
-import { formatCurrency, formatMonth } from "@/lib/format"
+import { useI18n } from "@/lib/i18n/client"
 import { SERIES_COLORS } from "@/lib/category-colors"
 import type { MonthlySeriesPoint } from "@/lib/queries/dashboard"
 
-const chartConfig: ChartConfig = {
-  clinic: { label: "Odeslaní pacienti", color: SERIES_COLORS.referrals },
-  referred_base: { label: "Objem žádanek (Kč)", color: SERIES_COLORS.referredSum },
-}
-
 export function ReferralsChart({ series }: { series: MonthlySeriesPoint[] }) {
+  const { t, formatCurrency, formatMonth, formatNumber, formatCompact } = useI18n()
   const [hiddenSeries, setHiddenSeries] = useState<Set<string>>(new Set())
+  const referralsLabel = t("Odeslaní pacienti")
+  const baseLabel = t("Objem žádanek (Kč)")
+  const chartConfig: ChartConfig = {
+    clinic: { label: referralsLabel, color: SERIES_COLORS.referrals },
+    referred_base: { label: baseLabel, color: SERIES_COLORS.referredSum },
+  }
 
   const chartData = useMemo(() => {
     return series.map((point) => ({
@@ -33,12 +35,12 @@ export function ReferralsChart({ series }: { series: MonthlySeriesPoint[] }) {
       clinic: point.referrals,
       referred_base: point.referred_base,
     }))
-  }, [series])
+  }, [series, formatMonth])
 
   return (
     <Card>
       <CardHeader className="flex flex-col gap-1">
-        <CardTitle>Vývoj odeslaných pacientů a objemu žádanek</CardTitle>
+        <CardTitle>{t("Vývoj odeslaných pacientů a objemu žádanek")}</CardTitle>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="aspect-auto h-[300px] w-full">
@@ -60,25 +62,21 @@ export function ReferralsChart({ series }: { series: MonthlySeriesPoint[] }) {
               axisLine={false}
               tickMargin={8}
               width={64}
-              tickFormatter={(value) =>
-                new Intl.NumberFormat("cs-CZ", { notation: "compact", maximumFractionDigits: 0 }).format(
-                  Number(value),
-                )
-              }
+              tickFormatter={(value) => formatCompact(Number(value))}
             />
             <ChartTooltip
               content={
                 <ChartTooltipContent
                   formatter={(value, _name, item) => {
                     const key = String(item.dataKey)
-                    const label = key === "referred_base" ? "Objem žádanek (Kč)" : "Odeslaní pacienti"
+                    const label = key === "referred_base" ? baseLabel : referralsLabel
                     return (
                       <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
                         <span className="text-muted-foreground">{label}</span>
                         <span className="font-mono font-medium tabular-nums text-foreground">
                           {key === "referred_base"
                             ? formatCurrency(Number(value))
-                            : new Intl.NumberFormat("cs-CZ").format(Number(value))}
+                            : formatNumber(Number(value))}
                         </span>
                       </div>
                     )
@@ -87,7 +85,7 @@ export function ReferralsChart({ series }: { series: MonthlySeriesPoint[] }) {
               }
             />
             <Legend
-              formatter={(value) => (value === "clinic" ? "Odeslaní pacienti" : "Objem žádanek (Kč)")}
+              formatter={(value) => (value === "clinic" ? referralsLabel : baseLabel)}
               onClick={(entry) => {
                 const key = String(entry.dataKey)
                 setHiddenSeries((current) => {

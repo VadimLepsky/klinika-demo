@@ -1,5 +1,6 @@
 "use server"
 
+import { actionError, tr } from "@/lib/i18n/server"
 import { revalidatePath } from "next/cache"
 import { db, newId } from "@/lib/demo/store"
 import { writeAudit } from "@/lib/audit"
@@ -13,7 +14,7 @@ export async function mapSourceToDoctor(sourceId: string, masterId: string): Pro
   try {
     const state = db()
     const row = state.sources.find((s) => s.source_id === sourceId)
-    if (!row) return { ok: false, error: "Zdroj nebyl nalezen." }
+    if (!row) return { ok: false, error: await tr("Zdroj nebyl nalezen.") }
 
     const old = { status: row.status, master_id: row.master_id }
     row.status = "doctor"
@@ -32,7 +33,7 @@ export async function mapSourceToDoctor(sourceId: string, masterId: string): Pro
     revalidatePath("/")
     return { ok: true }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Chyba" }
+    return { ok: false, error: await actionError(e) }
   }
 }
 
@@ -41,7 +42,7 @@ export async function markSourceNonCommission(sourceId: string): Promise<ActionR
   try {
     const state = db()
     const row = state.sources.find((s) => s.source_id === sourceId)
-    if (!row) return { ok: false, error: "Zdroj nebyl nalezen." }
+    if (!row) return { ok: false, error: await tr("Zdroj nebyl nalezen.") }
 
     const old = { status: row.status, master_id: row.master_id }
     row.status = "non_commission"
@@ -60,7 +61,7 @@ export async function markSourceNonCommission(sourceId: string): Promise<ActionR
     revalidatePath("/")
     return { ok: true }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Chyba" }
+    return { ok: false, error: await actionError(e) }
   }
 }
 
@@ -69,7 +70,7 @@ export async function flagStaff(masterId: string, isDoctor: boolean): Promise<Ac
   try {
     const state = db()
     const row = state.staff.find((s) => s.master_id === masterId)
-    if (!row) return { ok: false, error: "Zaměstnanec nebyl nalezen." }
+    if (!row) return { ok: false, error: await tr("Zaměstnanec nebyl nalezen.") }
 
     const old = { is_doctor: row.is_doctor }
     row.is_doctor = isDoctor
@@ -87,7 +88,7 @@ export async function flagStaff(masterId: string, isDoctor: boolean): Promise<Ac
     revalidatePath("/")
     return { ok: true }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Chyba" }
+    return { ok: false, error: await actionError(e) }
   }
 }
 
@@ -137,7 +138,7 @@ export async function mapCategory(
     revalidatePath("/")
     return { ok: true }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Chyba" }
+    return { ok: false, error: await actionError(e) }
   }
 }
 
@@ -152,12 +153,12 @@ export async function addUnmatchedService(
   target: { mode: "category"; categoryId: string } | { mode: "bucket"; bucket: string },
 ): Promise<ActionResult> {
   const cleanName = itemName.trim()
-  if (cleanName.length === 0) return { ok: false, error: "Název služby je prázdný." }
+  if (cleanName.length === 0) return { ok: false, error: await tr("Název služby je prázdný.") }
 
   try {
     const state = db()
     if (state.servicesCatalog.some((sc) => sc.service_id === itemId)) {
-      return { ok: false, error: "Tato služba už v číselníku je." }
+      return { ok: false, error: await tr("Tato služba už v číselníku je.") }
     }
 
     if (target.mode === "category") {
@@ -182,7 +183,7 @@ export async function addUnmatchedService(
       })
     } else {
       if (!state.buckets.some((b) => b.bucket === target.bucket)) {
-        return { ok: false, error: "Pravidlo nebylo nalezeno." }
+        return { ok: false, error: await tr("Pravidlo nebylo nalezeno.") }
       }
 
       state.servicesCatalog.push({
@@ -216,7 +217,7 @@ export async function addUnmatchedService(
     revalidatePath("/")
     return { ok: true }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Chyba" }
+    return { ok: false, error: await actionError(e) }
   }
 }
 
@@ -252,7 +253,7 @@ export async function ignoreUnmatchedLine(itemId: string, reason: string): Promi
     revalidatePath("/")
     return { ok: true }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Chyba" }
+    return { ok: false, error: await actionError(e) }
   }
 }
 
@@ -275,6 +276,6 @@ export async function unignoreUnmatchedLine(itemId: string): Promise<ActionResul
     revalidatePath("/")
     return { ok: true }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Chyba" }
+    return { ok: false, error: await actionError(e) }
   }
 }

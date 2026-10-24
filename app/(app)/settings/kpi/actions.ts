@@ -1,10 +1,11 @@
 "use server"
 
+import { actionError, getI18n, tr } from "@/lib/i18n/server"
 import { revalidatePath } from "next/cache"
 import { db, newId } from "@/lib/demo/store"
 import { writeAudit } from "@/lib/audit"
 import { getActorEmail } from "@/lib/session"
-import { formatMonth, periodKey } from "@/lib/format"
+import { periodKey } from "@/lib/format"
 import { KPI_METRICS, type KpiBandInputsByMetric, type KpiMetric } from "@/lib/kpi"
 
 type ActionResult = { ok: true } | { ok: false; error: string }
@@ -61,18 +62,18 @@ export async function createKpiProfile(
 ): Promise<ActionResult> {
   const actor = await getActorEmail()
   const name = normalizeName(rawName)
-  if (!name) return { ok: false, error: `Zadejte název (do ${MAX_NAME_LENGTH} znaků).` }
+  if (!name) return { ok: false, error: await tr("Zadejte název (do {max} znaků).", { max: MAX_NAME_LENGTH }) }
   const limitsError = validateLimits(maxBonus, maxPenalty, minSample)
-  if (limitsError) return { ok: false, error: limitsError }
+  if (limitsError) return { ok: false, error: await tr(limitsError) }
   for (const metric of KPI_METRICS) {
     const err = validateBandRows(bands[metric])
-    if (err) return { ok: false, error: err }
+    if (err) return { ok: false, error: await tr(err) }
   }
 
   try {
     const state = db()
     if (state.kpiProfiles.some((p) => p.name === name)) {
-      return { ok: false, error: "Profil s tímto názvem už existuje." }
+      return { ok: false, error: await tr("Profil s tímto názvem už existuje.") }
     }
     const id = newId()
     state.kpiProfiles.push({ id, name, active: true, max_bonus: maxBonus, max_penalty: maxPenalty, min_sample: minSample })
@@ -92,7 +93,7 @@ export async function createKpiProfile(
     revalidateKpiPaths()
     return { ok: true }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Chyba" }
+    return { ok: false, error: await actionError(e) }
   }
 }
 
@@ -106,18 +107,18 @@ export async function updateKpiProfile(
 ): Promise<ActionResult> {
   const actor = await getActorEmail()
   const name = normalizeName(rawName)
-  if (!name) return { ok: false, error: `Zadejte název (do ${MAX_NAME_LENGTH} znaků).` }
+  if (!name) return { ok: false, error: await tr("Zadejte název (do {max} znaků).", { max: MAX_NAME_LENGTH }) }
   const limitsError = validateLimits(maxBonus, maxPenalty, minSample)
-  if (limitsError) return { ok: false, error: limitsError }
+  if (limitsError) return { ok: false, error: await tr(limitsError) }
   for (const metric of KPI_METRICS) {
     const err = validateBandRows(bands[metric])
-    if (err) return { ok: false, error: err }
+    if (err) return { ok: false, error: await tr(err) }
   }
 
   try {
     const state = db()
     const current = state.kpiProfiles.find((p) => p.id === id)
-    if (!current) return { ok: false, error: "Profil nebyl nalezen." }
+    if (!current) return { ok: false, error: await tr("Profil nebyl nalezen.") }
 
     const oldBands: Record<KpiMetric, { min_value: number; max_value: number | null; points: number }[]> = {
       showup: [],
@@ -161,7 +162,7 @@ export async function updateKpiProfile(
     revalidateKpiPaths()
     return { ok: true }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Chyba" }
+    return { ok: false, error: await actionError(e) }
   }
 }
 
@@ -170,7 +171,7 @@ export async function setKpiProfileActive(id: string, active: boolean): Promise<
   try {
     const state = db()
     const current = state.kpiProfiles.find((p) => p.id === id)
-    if (!current) return { ok: false, error: "Profil nebyl nalezen." }
+    if (!current) return { ok: false, error: await tr("Profil nebyl nalezen.") }
     if (current.active === active) return { ok: true }
 
     const oldActive = current.active
@@ -186,7 +187,7 @@ export async function setKpiProfileActive(id: string, active: boolean): Promise<
     revalidateKpiPaths()
     return { ok: true }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Chyba" }
+    return { ok: false, error: await actionError(e) }
   }
 }
 
@@ -195,9 +196,9 @@ export async function deleteKpiProfile(id: string): Promise<ActionResult> {
   try {
     const state = db()
     const current = state.kpiProfiles.find((p) => p.id === id)
-    if (!current) return { ok: false, error: "Profil nebyl nalezen." }
+    if (!current) return { ok: false, error: await tr("Profil nebyl nalezen.") }
     const assignedCount = state.doctorKpiProfiles.filter((d) => d.profile_id === id).length
-    if (assignedCount > 0) return { ok: false, error: IN_USE_ERROR }
+    if (assignedCount > 0) return { ok: false, error: await tr(IN_USE_ERROR) }
 
     const bands = state.kpiProfileBands.filter((b) => b.profile_id === id)
     state.kpiProfiles = state.kpiProfiles.filter((p) => p.id !== id)
@@ -213,7 +214,7 @@ export async function deleteKpiProfile(id: string): Promise<ActionResult> {
     revalidateKpiPaths()
     return { ok: true }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Chyba" }
+    return { ok: false, error: await actionError(e) }
   }
 }
 
@@ -231,16 +232,16 @@ export async function assignDoctorKpiProfile(
   validFrom: string,
 ): Promise<ActionResult> {
   const actor = await getActorEmail()
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(validFrom)) return { ok: false, error: "Neplatné datum." }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(validFrom)) return { ok: false, error: await tr("Neplatné datum.") }
 
   try {
     const state = db()
     if (profileId) {
       const profile = state.kpiProfiles.find((p) => p.id === profileId)
-      if (profile?.active !== true) return { ok: false, error: "Profil je neaktivní nebo neexistuje. Obnovte stránku." }
+      if (profile?.active !== true) return { ok: false, error: await tr("Profil je neaktivní nebo neexistuje. Obnovte stránku.") }
     }
     const staff = state.staff.find((s) => s.master_id === masterId)
-    if (staff?.is_doctor !== true) return { ok: false, error: "KPI lze přiřadit jen lékaři." }
+    if (staff?.is_doctor !== true) return { ok: false, error: await tr("KPI lze přiřadit jen lékaři.") }
 
     const exactRow = state.doctorKpiProfiles.find((d) => d.master_id === masterId && d.valid_from === validFrom)
 
@@ -255,7 +256,7 @@ export async function assignDoctorKpiProfile(
       if (openRow) {
         const openFrom = periodKey(openRow.valid_from)
         if (openFrom > validFrom) {
-          return { ok: false, error: `Datum musí být nejdříve od stávajícího přiřazení (od ${formatMonth(openFrom)}).` }
+          return { ok: false, error: await tr("Datum musí být nejdříve od stávajícího přiřazení (od {month}).", { month: (await getI18n()).formatMonth(openFrom) }) }
         }
         oldValue = { profile_id: openRow.profile_id, valid_from: openFrom }
         openRow.valid_to = validFrom
@@ -281,7 +282,7 @@ export async function assignDoctorKpiProfile(
     revalidateKpiPaths()
     return { ok: true }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Chyba" }
+    return { ok: false, error: await actionError(e) }
   }
 }
 
@@ -298,12 +299,12 @@ export async function deleteDoctorKpiAssignment(masterId: string, assignmentId: 
       .sort((a, b) => (a.valid_from < b.valid_from ? 1 : -1))
     const target = rows[0]
     if (!target || target.id !== assignmentId || target.valid_to !== null) {
-      return { ok: false, error: "Lze smazat jen poslední záznam historie." }
+      return { ok: false, error: await tr("Lze smazat jen poslední záznam historie.") }
     }
     const validFrom = periodKey(target.valid_from)
     const period = state.periods.find((p) => p.period === validFrom)
     if (period?.status === "frozen") {
-      return { ok: false, error: "Zmrazený měsíc nelze mazat." }
+      return { ok: false, error: await tr("Zmrazený měsíc nelze mazat.") }
     }
 
     const previous = rows[1] ?? null
@@ -320,6 +321,6 @@ export async function deleteDoctorKpiAssignment(masterId: string, assignmentId: 
     revalidateKpiPaths()
     return { ok: true }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Chyba" }
+    return { ok: false, error: await actionError(e) }
   }
 }

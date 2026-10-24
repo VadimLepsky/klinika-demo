@@ -24,13 +24,9 @@ import {
   TooltipContent as InfoTooltipContent,
   TooltipTrigger as InfoTooltipTrigger,
 } from "@/components/ui/tooltip"
-import { formatCurrency, formatNumber, formatRate } from "@/lib/format"
+import { useI18n } from "@/lib/i18n/client"
 import { getCategoryColor, OTHER_COLOR } from "@/lib/category-colors"
 import type { BucketBreakdownRow } from "@/lib/queries/doctor"
-
-const chartConfig = {
-  base: { label: "Základ", color: "var(--chart-1)" },
-}
 
 const OTHER_BUCKET = "__other__"
 
@@ -41,21 +37,24 @@ type DonutRow = BucketBreakdownRow & {
 }
 
 function DonutTooltip({ active, payload, totalBase }: { active?: boolean; payload?: Array<{ payload: DonutRow }>; totalBase: number }) {
+  const { t, formatCurrency, formatDecimal } = useI18n()
   if (!active || !payload?.[0]) return null
   const row = payload[0].payload
   const share = totalBase > 0 ? (row.base / totalBase) * 100 : 0
   return (
     <div className="rounded-lg border border-border bg-popover px-3 py-2 text-sm text-popover-foreground shadow-md">
-      <div className="font-medium">{row.label}</div>
-      <div className="mt-1 tabular-nums">{formatCurrency(row.base)} · {share.toFixed(1)}%</div>
+      <div className="font-medium">{t(row.label)}</div>
+      <div className="mt-1 tabular-nums">{formatCurrency(row.base)} · {formatDecimal(share)}%</div>
       {row.sourceLabels?.length ? (
-        <div className="mt-1 max-w-56 text-xs text-muted-foreground">{row.sourceLabels.join(", ")}</div>
+        <div className="mt-1 max-w-56 text-xs text-muted-foreground">{row.sourceLabels.map((l) => t(l)).join(", ")}</div>
       ) : null}
     </div>
   )
 }
 
 export function BucketBreakdown({ rows }: { rows: BucketBreakdownRow[]; month: string }) {
+  const { t, formatCurrency, formatNumber, formatRate } = useI18n()
+  const chartConfig = { base: { label: t("Základ"), color: "var(--chart-1)" } }
   const [activeBucket, setActiveBucket] = useState<string | null>(null)
   const totalBase = rows.reduce((sum, row) => sum + row.base, 0)
   const totalCommission = rows.reduce((sum, row) => sum + row.commission, 0)
@@ -70,7 +69,7 @@ export function BucketBreakdown({ rows }: { rows: BucketBreakdownRow[]; month: s
     if (!small.length) return visible
     const other: DonutRow = {
       bucket: OTHER_BUCKET,
-      label: "Ostatní",
+      label: t("Ostatní"),
       qty: small.reduce((sum, row) => sum + row.qty, 0),
       base: small.reduce((sum, row) => sum + row.base, 0),
       rate: 0,
@@ -79,19 +78,19 @@ export function BucketBreakdown({ rows }: { rows: BucketBreakdownRow[]; month: s
       sourceLabels: small.map((row) => row.label),
     }
     return [...visible, other]
-  }, [sortedRows, totalBase])
+  }, [sortedRows, totalBase, t])
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Rozpad podle kategorií</CardTitle>
+        <CardTitle>{t("Rozpad podle kategorií")}</CardTitle>
       </CardHeader>
       <CardContent>
         {rows.length === 0 ? (
           <Empty className="py-10">
             <EmptyHeader>
-              <EmptyTitle>Za období nejsou data</EmptyTitle>
-              <EmptyDescription>Za vybraný měsíc nemá tento lékař žádné provize.</EmptyDescription>
+              <EmptyTitle>{t("Za období nejsou data")}</EmptyTitle>
+              <EmptyDescription>{t("Za vybraný měsíc nemá tento lékař žádné provize.")}</EmptyDescription>
             </EmptyHeader>
           </Empty>
         ) : (
@@ -128,7 +127,7 @@ export function BucketBreakdown({ rows }: { rows: BucketBreakdownRow[]; month: s
               </ChartContainer>
               <div className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center">
                 <span className="text-xl font-semibold tabular-nums text-foreground">{formatCurrency(totalBase)}</span>
-                <span className="text-xs text-muted-foreground">základ pro výpočet</span>
+                <span className="text-xs text-muted-foreground">{t("základ pro výpočet")}</span>
               </div>
             </div>
 
@@ -136,10 +135,10 @@ export function BucketBreakdown({ rows }: { rows: BucketBreakdownRow[]; month: s
               <Table className="table-fixed w-full min-w-[440px]">
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Kategorie</TableHead>
-                    <TableHead className="w-[90px] text-right">Služeb</TableHead>
-                    <TableHead className="w-[90px] text-right">Sazba</TableHead>
-                    <TableHead className="w-[110px] text-right">Provize, Kč</TableHead>
+                    <TableHead>{t("Kategorie")}</TableHead>
+                    <TableHead className="w-[90px] text-right">{t("Služeb")}</TableHead>
+                    <TableHead className="w-[90px] text-right">{t("Sazba")}</TableHead>
+                    <TableHead className="w-[110px] text-right">{t("Provize, Kč")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -156,9 +155,9 @@ export function BucketBreakdown({ rows }: { rows: BucketBreakdownRow[]; month: s
                         onMouseEnter={() => setActiveBucket(row.bucket)}
                         onMouseLeave={() => setActiveBucket(null)}
                       >
-                        <TableCell className="max-w-0 truncate font-medium" title={row.label}>
+                        <TableCell className="max-w-0 truncate font-medium" title={t(row.label)}>
                           <span className="mr-2 inline-block size-2 rounded-full align-middle" style={{ backgroundColor: color }} />
-                          {row.label}
+                          {t(row.label)}
                         </TableCell>
                         <TableCell className="whitespace-nowrap text-right tabular-nums">{formatNumber(row.qty)}</TableCell>
                         <TableCell className="whitespace-nowrap text-right tabular-nums">
@@ -171,12 +170,12 @@ export function BucketBreakdown({ rows }: { rows: BucketBreakdownRow[]; month: s
                                 <InfoTooltipTrigger
                                   render={
                                     <span className="cursor-default text-[10px] font-medium text-primary">
-                                      osobní
+                                      {t("osobní")}
                                     </span>
                                   }
                                 />
                                 <InfoTooltipContent>
-                                  Obecná sazba: {formatRate(row.general_rate)}
+                                  {t("Obecná sazba: {rate}", { rate: formatRate(row.general_rate) })}
                                 </InfoTooltipContent>
                               </InfoTooltip>
                             </span>
@@ -191,7 +190,7 @@ export function BucketBreakdown({ rows }: { rows: BucketBreakdownRow[]; month: s
                 </TableBody>
                 <TableFooter>
                   <TableRow>
-                    <TableCell className="font-semibold">Celkem</TableCell>
+                    <TableCell className="font-semibold">{t("Celkem")}</TableCell>
                     <TableCell className="whitespace-nowrap text-right font-semibold tabular-nums">{formatNumber(totalQty)}</TableCell>
                     <TableCell />
                     <TableCell className="whitespace-nowrap text-right font-semibold tabular-nums">{formatCurrency(totalCommission)}</TableCell>

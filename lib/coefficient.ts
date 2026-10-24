@@ -4,6 +4,8 @@
 // back to the same default bands below, so the rule can never drift out of sync
 // between call sites.
 
+import type { TFunction } from "@/lib/i18n/translate"
+
 export const COEFFICIENT_THRESHOLDS = {
   /** Below this: too few referrals relative to patients served. */
   LOW: 20,
@@ -79,16 +81,16 @@ export function getCoefficientBadgeClassName(pct: number, bands?: CoefficientBan
 }
 
 /** Human-readable range for a single band within a sorted list, e.g. "20 % – 45 %" or "od 75 %" for the last one. */
-export function getBandRangeLabel(band: CoefficientBand, sortedBands: CoefficientBand[]): string {
+export function getBandRangeLabel(band: CoefficientBand, sortedBands: CoefficientBand[], t: TFunction): string {
   const index = sortedBands.findIndex((b) => b === band)
   const next = index >= 0 ? sortedBands[index + 1] : undefined
-  return next ? `${band.min_pct} % – ${next.min_pct} %` : `od ${band.min_pct} %`
+  return next ? `${band.min_pct} % – ${next.min_pct} %` : t("od {pct} %", { pct: band.min_pct })
 }
 
 /** Tooltip copy for a coefficient percentage: the range of its matching band, using a specialization's bands or the defaults. */
-export function getCoefficientTooltip(pct: number, bands?: CoefficientBand[] | null): string {
+export function getCoefficientTooltip(pct: number, bands: CoefficientBand[] | null | undefined, t: TFunction): string {
   const list = bands && bands.length > 0 ? bands : DEFAULT_COEFFICIENT_BANDS
   const sorted = [...list].sort((a, b) => a.min_pct - b.min_pct)
   const band = resolveCoefficientBand(pct, sorted)
-  return getBandRangeLabel(band, sorted)
+  return getBandRangeLabel(band, sorted, t)
 }

@@ -23,6 +23,7 @@ import type { DoctorRateOverride, StaffRow } from "@/lib/queries/settings"
 import { DoctorSpecializationsDialog } from "@/components/settings/doctor-specializations-dialog"
 import type { DoctorSpecializations, Specialization } from "@/lib/queries/specializations"
 import type { DoctorKpiBadge, DoctorKpiHistoryRow, KpiProfile, MonthOption } from "@/lib/queries/kpi"
+import { useI18n } from "@/lib/i18n/client"
 
 const DOCTOR_YES = "yes"
 const DOCTOR_NO = "no"
@@ -72,6 +73,11 @@ function StaffRowItem({
   kpiHistory: DoctorKpiHistoryRow[]
   kpiMonthOptions: MonthOption[]
 }) {
+  const { t } = useI18n()
+  const doctorItems = useMemo(
+    () => Object.fromEntries(Object.entries(DOCTOR_ITEMS).map(([k, v]) => [k, t(v)])),
+    [t],
+  )
   const [flag, setFlag] = useState(flagToValue(row.is_doctor))
   const [note] = useState(row.note ?? "")
   const [pending, startTransition] = useTransition()
@@ -81,7 +87,7 @@ function StaffRowItem({
   const save = () => {
     startTransition(async () => {
       const res = await updateStaff(row.master_id, valueToFlag(flag), note || null)
-      if (res.ok) toast.success(`„${row.full_name}“ uloženo.`)
+      if (res.ok) toast.success(t("„{name}“ uloženo.", { name: row.full_name }))
       else toast.error(res.error)
     })
   }
@@ -90,26 +96,26 @@ function StaffRowItem({
     <TableRow>
       <TableCell className="max-w-0 pl-4 font-medium text-foreground">
         <div className="flex items-center gap-2">
-          <span className="min-w-0 truncate" title={row.full_name}>
-            {row.full_name}
+          <span className="min-w-0 truncate" title={t(row.full_name)}>
+            {t(row.full_name)}
           </span>
           {hasPersonalRates ? (
             <Badge variant="secondary" className="shrink-0 whitespace-nowrap">
-              osobní sazby
+              {t("osobní sazby")}
             </Badge>
           ) : null}
         </div>
       </TableCell>
       <TableCell>
-        <Select value={flag} onValueChange={setFlag} disabled={pending} items={DOCTOR_ITEMS}>
+        <Select value={flag} onValueChange={setFlag} disabled={pending} items={doctorItems}>
           <SelectTrigger className="w-full">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
-              <SelectItem value={DOCTOR_YES}>Lékař</SelectItem>
-              <SelectItem value={DOCTOR_NO}>Není lékař</SelectItem>
-              <SelectItem value={DOCTOR_UNSET}>Neurčeno</SelectItem>
+              <SelectItem value={DOCTOR_YES}>{t("Lékař")}</SelectItem>
+              <SelectItem value={DOCTOR_NO}>{t("Není lékař")}</SelectItem>
+              <SelectItem value={DOCTOR_UNSET}>{t("Neurčeno")}</SelectItem>
             </SelectGroup>
           </SelectContent>
         </Select>
@@ -155,7 +161,7 @@ function StaffRowItem({
           ) : null}
           <Button size="sm" onClick={save} disabled={pending || !dirty}>
             {pending ? <Spinner data-icon="inline-start" /> : null}
-            Uložit
+            {t("Uložit")}
           </Button>
         </div>
       </TableCell>
@@ -188,6 +194,7 @@ export function StaffTable({
   kpiHistoryByMaster: Record<string, DoctorKpiHistoryRow[]>
   kpiMonthOptions: MonthOption[]
 }) {
+  const { t } = useI18n()
   const [q, setQ] = useState("")
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase()
@@ -202,7 +209,7 @@ export function StaffTable({
           <InputGroupInput
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Hledat zaměstnance…"
+            placeholder={t("Hledat zaměstnance…")}
           />
           <InputGroupAddon>
             <Search />
@@ -214,11 +221,11 @@ export function StaffTable({
         <Table className="table-fixed w-full min-w-[1080px]">
           <TableHeader>
             <TableRow>
-              <TableHead className="pl-4">Zaměstnanec</TableHead>
-              <TableHead className="w-[150px]">Označení</TableHead>
-              <TableHead className="w-[220px]">Specializace</TableHead>
+              <TableHead className="pl-4">{t("Zaměstnanec")}</TableHead>
+              <TableHead className="w-[150px]">{t("Označení")}</TableHead>
+              <TableHead className="w-[220px]">{t("Specializace")}</TableHead>
               <TableHead className="w-[180px]">KPI</TableHead>
-              <TableHead className="w-[210px] text-right pr-4">Akce</TableHead>
+              <TableHead className="w-[210px] text-right pr-4">{t("Akce")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -243,7 +250,7 @@ export function StaffTable({
             ) : (
               <TableRow>
                 <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
-                  Dotazu neodpovídá žádný zaměstnanec.
+                  {t("Dotazu neodpovídá žádný zaměstnanec.")}
                 </TableCell>
               </TableRow>
             )}

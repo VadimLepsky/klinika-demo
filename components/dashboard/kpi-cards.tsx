@@ -2,12 +2,13 @@ import type { ReactNode } from "react"
 import { ArrowDownRight, ArrowUpRight, Coins, Repeat, Send, Stethoscope, Wallet } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DoctorsWithoutCommission } from "@/components/dashboard/doctors-without-commission"
-import { formatCoefficient, formatCurrencyRounded, formatNumber } from "@/lib/format"
+import { getI18n } from "@/lib/i18n/server"
 import type { DashboardKpis, DoctorWithoutCommission } from "@/lib/queries/dashboard"
 
 /** Change vs previous month, in %. Hidden when there is no previous month or it was 0. */
-function Delta({ current, previous }: { current: number; previous: number | null }) {
+async function Delta({ current, previous }: { current: number; previous: number | null }) {
   if (previous == null || previous === 0) return null
+  const { t } = await getI18n()
   const pct = ((current - previous) / previous) * 100
   const rounded = Math.round(pct)
   if (rounded === 0) {
@@ -20,7 +21,7 @@ function Delta({ current, previous }: { current: number; previous: number | null
       className={`inline-flex items-center gap-0.5 text-xs font-medium tabular-nums ${
         up ? "text-status-accrued-foreground" : "text-status-unmatched-foreground"
       }`}
-      title="Ve srovnání s předchozím měsícem"
+      title={t("Ve srovnání s předchozím měsícem")}
     >
       {up ? "+" : "−"}
       {Math.abs(rounded)}%
@@ -37,7 +38,7 @@ type Item = {
   delta?: ReactNode
 }
 
-export function KpiCards({
+export async function KpiCards({
   kpis,
   prev,
   withoutCommission,
@@ -50,37 +51,38 @@ export function KpiCards({
   period: string
   spec: string | null
 }) {
+  const { t, formatCoefficient, formatCurrencyRounded, formatNumber } = await getI18n()
   const items: Item[] = [
     {
-      label: "Provize celkem",
+      label: t("Provize celkem"),
       value: formatCurrencyRounded(kpis.totalCommission),
       icon: Coins,
       delta: <Delta current={kpis.totalCommission} previous={prev?.totalCommission ?? null} />,
     },
     {
-      label: "Odeslaní pacienti",
+      label: t("Odeslaní pacienti"),
       value: formatNumber(kpis.totalReferredPatients),
       icon: Send,
-      secondary: `koeficient ${formatCoefficient(kpis.totalReferredPatients, kpis.totalPatientsServed)}`,
+      secondary: t("koeficient {value}", { value: formatCoefficient(kpis.totalReferredPatients, kpis.totalPatientsServed) }),
       delta: <Delta current={kpis.totalReferredPatients} previous={prev?.totalReferredPatients ?? null} />,
     },
     {
-      label: "Objem žádanek (Kč)",
+      label: t("Objem žádanek (Kč)"),
       value: formatCurrencyRounded(kpis.totalBase),
       icon: Wallet,
       delta: <Delta current={kpis.totalBase} previous={prev?.totalBase ?? null} />,
     },
     {
-      label: "Lékařů s provizí",
+      label: t("Lékařů s provizí"),
       value: formatNumber(kpis.doctorsWithCommission),
       icon: Stethoscope,
       secondary: <DoctorsWithoutCommission doctors={withoutCommission} period={period} spec={spec} />,
     },
     {
-      label: "Přeobjednání",
+      label: t("Přeobjednání"),
       value: formatNumber(kpis.totalSelfRecords),
       icon: Repeat,
-      secondary: `koeficient ${formatCoefficient(kpis.totalSelfRecords, kpis.totalVisitsPerformed)}`,
+      secondary: t("koeficient {value}", { value: formatCoefficient(kpis.totalSelfRecords, kpis.totalVisitsPerformed) }),
     },
   ]
 

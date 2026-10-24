@@ -6,9 +6,10 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { DeleteBucketButton } from "@/components/settings/delete-bucket-button"
 import { RateEditDialog } from "@/components/settings/rate-edit-dialog"
 import type { BucketManagementRow, RateHistoryRow } from "@/lib/queries/settings"
-import { formatRate, formatDate } from "@/lib/format"
+import { useI18n } from "@/lib/i18n/client"
 
 function RateHistoryTooltip({ history, children }: { history: RateHistoryRow[]; children: React.ReactNode }) {
+  const { t, formatRate, formatDate } = useI18n()
   if (history.length === 0) return <>{children}</>
 
   return (
@@ -21,7 +22,7 @@ function RateHistoryTooltip({ history, children }: { history: RateHistoryRow[]; 
             {h.valid_to ? ` — ${formatDate(h.valid_to)}` : null}
             {h.valid_to === null ? (
               <Badge variant="secondary" className="px-1 py-0 text-[10px] leading-4">
-                platná
+                {t("platná")}
               </Badge>
             ) : null}
           </span>
@@ -38,17 +39,18 @@ export function BucketsTable({
   buckets: BucketManagementRow[]
   histories: Record<string, RateHistoryRow[]>
 }) {
+  const { t, formatRate, formatDate } = useI18n()
   return (
     <div className="overflow-x-auto rounded-lg border border-border">
       <Table className="table-fixed w-full min-w-[820px]">
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[220px] pl-4">Pravidlo</TableHead>
-            <TableHead className="w-[110px]">Příjemce</TableHead>
-            <TableHead className="w-[100px] text-right">Platná sazba</TableHead>
-            <TableHead className="w-[100px]">Platí od</TableHead>
-            <TableHead className="w-[80px] text-right">Kategorií</TableHead>
-            <TableHead className="text-right pr-4">Akce</TableHead>
+            <TableHead className="w-[220px] pl-4">{t("Pravidlo")}</TableHead>
+            <TableHead className="w-[110px]">{t("Příjemce")}</TableHead>
+            <TableHead className="w-[100px] text-right">{t("Platná sazba")}</TableHead>
+            <TableHead className="w-[100px]">{t("Platí od")}</TableHead>
+            <TableHead className="w-[80px] text-right">{t("Kategorií")}</TableHead>
+            <TableHead className="text-right pr-4">{t("Akce")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -59,14 +61,14 @@ export function BucketsTable({
                 <TableRow key={b.bucket}>
                   <TableCell className="max-w-0 pl-4">
                     <span className="flex min-w-0 flex-col gap-0.5">
-                      <span className="truncate font-medium text-foreground" title={b.label}>
-                        {b.label}
+                      <span className="truncate font-medium text-foreground" title={t(b.label)}>
+                        {t(b.label)}
                       </span>
                       <span className="truncate font-mono text-xs text-muted-foreground">{b.bucket}</span>
                     </span>
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-muted-foreground">
-                    {b.beneficiary === "source" ? "Odesílající" : "Provádějící"}
+                    {b.beneficiary === "source" ? t("Odesílající") : t("Provádějící")}
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-right">
                     {b.current_rate != null ? (
@@ -101,7 +103,7 @@ export function BucketsTable({
           ) : (
             <TableRow>
               <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
-                Žádná pravidla.
+                {t("Žádná pravidla.")}
               </TableCell>
             </TableRow>
           )}

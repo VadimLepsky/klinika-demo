@@ -26,8 +26,7 @@ import {
 } from "@/components/ui/dialog"
 import { createBucket } from "@/app/(app)/settings/actions"
 import { nextMonthValue, monthInputToDate, slugify } from "@/lib/format"
-
-const BENEFICIARY_ITEMS = { source: "Odesílající", performer: "Provádějící" }
+import { useI18n } from "@/lib/i18n/client"
 
 export function CreateBucketDialog({
   trigger,
@@ -41,6 +40,8 @@ export function CreateBucketDialog({
   onOpenChange?: (open: boolean) => void
   onCreated?: (bucket: { bucket: string; label: string }) => void
 }) {
+  const { t } = useI18n()
+  const BENEFICIARY_ITEMS = { source: t("Odesílající"), performer: t("Provádějící") }
   const isControlled = openProp !== undefined
   const [internalOpen, setInternalOpen] = useState(false)
   const open = isControlled ? openProp : internalOpen
@@ -76,13 +77,13 @@ export function CreateBucketDialog({
   const save = () => {
     const pct = Number.parseFloat(ratePct.replace(",", "."))
     if (!Number.isFinite(pct)) {
-      toast.error("Zadejte platnou sazbu.")
+      toast.error(t("Zadejte platnou sazbu."))
       return
     }
     startTransition(async () => {
       const res = await createBucket(label, key, beneficiary as "source" | "performer", pct, monthInputToDate(month))
       if (res.ok && res.bucket) {
-        toast.success(`Pravidlo «${res.bucket.label}» bylo vytvořeno.`)
+        toast.success(t("Pravidlo «{name}» bylo vytvořeno.", { name: res.bucket.label }))
         onCreated?.(res.bucket)
         setOpen(false)
       } else if (!res.ok) {
@@ -96,22 +97,22 @@ export function CreateBucketDialog({
       {trigger ? <DialogTrigger render={trigger} /> : null}
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Nové pravidlo</DialogTitle>
+          <DialogTitle>{t("Nové pravidlo")}</DialogTitle>
         </DialogHeader>
 
         <FieldGroup>
           <Field>
-            <FieldLabel htmlFor="bucket-label">Název</FieldLabel>
+            <FieldLabel htmlFor="bucket-label">{t("Název")}</FieldLabel>
             <Input
               id="bucket-label"
               value={label}
               onChange={(e) => onLabelChange(e.target.value)}
-              placeholder="např. Laboratoř Synlab"
+              placeholder={t("např. Laboratoř Synlab")}
               disabled={pending}
             />
           </Field>
           <Field>
-            <FieldLabel htmlFor="bucket-key">Klíč</FieldLabel>
+            <FieldLabel htmlFor="bucket-key">{t("Klíč")}</FieldLabel>
             <Input
               id="bucket-key"
               value={key}
@@ -119,41 +120,41 @@ export function CreateBucketDialog({
                 setKeyTouched(true)
                 setKey(e.target.value.toLowerCase())
               }}
-              placeholder="např. synlab"
+              placeholder={t("např. synlab")}
               disabled={pending}
               className="font-mono"
             />
             <FieldDescription>
-              Pouze malá písmena bez diakritiky, číslice a podtržítka. Po vytvoření neměnný.
+              {t("Pouze malá písmena bez diakritiky, číslice a podtržítka. Po vytvoření neměnný.")}
             </FieldDescription>
           </Field>
           <Field>
-            <FieldLabel htmlFor="bucket-beneficiary">Příjemce</FieldLabel>
+            <FieldLabel htmlFor="bucket-beneficiary">{t("Příjemce")}</FieldLabel>
             <Select value={beneficiary} onValueChange={setBeneficiary} disabled={pending} items={BENEFICIARY_ITEMS}>
               <SelectTrigger id="bucket-beneficiary" className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  <SelectItem value="source">Odesílající</SelectItem>
-                  <SelectItem value="performer">Provádějící</SelectItem>
+                  <SelectItem value="source">{t("Odesílající")}</SelectItem>
+                  <SelectItem value="performer">{t("Provádějící")}</SelectItem>
                 </SelectGroup>
               </SelectContent>
             </Select>
           </Field>
           <Field>
-            <FieldLabel htmlFor="bucket-rate">Počáteční sazba, %</FieldLabel>
+            <FieldLabel htmlFor="bucket-rate">{t("Počáteční sazba, %")}</FieldLabel>
             <Input
               id="bucket-rate"
               inputMode="decimal"
               value={ratePct}
               onChange={(e) => setRatePct(e.target.value)}
-              placeholder="např. 7"
+              placeholder={t("např. 7")}
               disabled={pending}
             />
           </Field>
           <Field>
-            <FieldLabel htmlFor="bucket-valid-from">Platí od</FieldLabel>
+            <FieldLabel htmlFor="bucket-valid-from">{t("Platí od")}</FieldLabel>
             <Input
               id="bucket-valid-from"
               type="month"
@@ -165,10 +166,10 @@ export function CreateBucketDialog({
         </FieldGroup>
 
         <DialogFooter>
-          <DialogClose render={<Button variant="ghost">Zrušit</Button>} />
+          <DialogClose render={<Button variant="ghost">{t("Zrušit")}</Button>} />
           <Button onClick={save} disabled={pending}>
             {pending ? <Spinner data-icon="inline-start" /> : <Plus data-icon="inline-start" />}
-            Vytvořit
+            {t("Vytvořit")}
           </Button>
         </DialogFooter>
       </DialogContent>

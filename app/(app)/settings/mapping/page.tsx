@@ -10,13 +10,18 @@ import {
   getServiceMappings,
 } from "@/lib/queries/settings"
 import { getBucketOptions } from "@/lib/queries/attention"
-import { formatDate } from "@/lib/format"
 
-export const metadata = { title: "Kategorie z CRM" }
+import { getI18n } from "@/lib/i18n/server"
+
+export async function generateMetadata() {
+  const { t } = await getI18n()
+  return { title: t("Kategorie z CRM") }
+}
 
 export const dynamic = "force-dynamic"
 
 export default async function MappingPage() {
+  const { t, formatDate } = await getI18n()
   const [categories, exclusions, serviceMappings, buckets] = await Promise.all([
     getCategoryMappings(),
     getServiceExclusions(),
@@ -29,9 +34,9 @@ export default async function MappingPage() {
       <CardContent className="pt-6">
         <Tabs defaultValue="categories">
           <TabsList>
-            <TabsTrigger value="categories">Kategorie</TabsTrigger>
-            <TabsTrigger value="exclusions">Výjimky služeb</TabsTrigger>
-            <TabsTrigger value="services">Výjimky podle služby</TabsTrigger>
+            <TabsTrigger value="categories">{t("Kategorie")}</TabsTrigger>
+            <TabsTrigger value="exclusions">{t("Výjimky služeb")}</TabsTrigger>
+            <TabsTrigger value="services">{t("Výjimky podle služby")}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="categories" className="pt-4">
@@ -45,16 +50,16 @@ export default async function MappingPage() {
           <TabsContent value="services" className="pt-4">
             <div className="flex flex-col gap-4">
               <p className="text-sm text-muted-foreground">
-                Výjimky pro jednotlivé služby — přebíjejí pravidlo jejich kategorie.
+                {t("Výjimky pro jednotlivé služby — přebíjejí pravidlo jejich kategorie.")}
               </p>
               <div className="overflow-x-auto rounded-lg border border-border">
                 <Table className="table-fixed w-full min-w-[600px]">
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="pl-4">Služba</TableHead>
-                      <TableHead className="w-[180px]">Pravidlo</TableHead>
-                      <TableHead className="w-[120px]">Platí od</TableHead>
-                      <TableHead className="w-[120px]">Platí do</TableHead>
+                      <TableHead className="pl-4">{t("Služba")}</TableHead>
+                      <TableHead className="w-[180px]">{t("Pravidlo")}</TableHead>
+                      <TableHead className="w-[120px]">{t("Platí od")}</TableHead>
+                      <TableHead className="w-[120px]">{t("Platí do")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -63,15 +68,15 @@ export default async function MappingPage() {
                         <TableRow key={s.id}>
                           <TableCell
                             className="max-w-0 truncate pl-4 font-medium text-foreground"
-                            title={s.service_name}
+                            title={t(s.service_name)}
                           >
-                            {s.service_name}
+                            {t(s.service_name)}
                           </TableCell>
                           <TableCell className="whitespace-nowrap">
                             {s.bucket_label ? (
-                              <Badge variant="secondary">{s.bucket_label}</Badge>
+                              <Badge variant="secondary">{t(s.bucket_label)}</Badge>
                             ) : (
-                              <Badge variant="outline">bez provize</Badge>
+                              <Badge variant="outline">{t("bez provize")}</Badge>
                             )}
                           </TableCell>
                           <TableCell className="whitespace-nowrap text-muted-foreground">
@@ -85,7 +90,7 @@ export default async function MappingPage() {
                     ) : (
                       <TableRow>
                         <TableCell colSpan={4} className="py-8 text-center text-muted-foreground">
-                          Žádné výjimky podle služby.
+                          {t("Žádné výjimky podle služby.")}
                         </TableCell>
                       </TableRow>
                     )}

@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/table"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { PayoutCheckbox } from "@/components/dashboard/payout-checkbox"
-import { formatCoefficient, formatCurrency, formatNumber } from "@/lib/format"
+import { useI18n } from "@/lib/i18n/client"
 import { getCoefficientBadgeClassName, getCoefficientTooltip, type CoefficientBand } from "@/lib/coefficient"
 import { formatKFactor, kFactorColorClassName } from "@/lib/kpi"
 import { withPeriod } from "@/lib/period-link"
@@ -40,34 +40,35 @@ export function DoctorsTable({
   actorEmail: string
   bandsByDoctor: Map<string, CoefficientBand[]>
 }) {
+  const { t, formatCoefficient, formatCurrency, formatNumber } = useI18n()
   const router = useRouter()
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Lékaři za měsíc</CardTitle>
-        <CardDescription>Kliknutím na řádek otevřete kartu lékaře.</CardDescription>
+        <CardTitle>{t("Lékaři za měsíc")}</CardTitle>
+        <CardDescription>{t("Kliknutím na řádek otevřete kartu lékaře.")}</CardDescription>
       </CardHeader>
       <CardContent className="overflow-x-auto px-0">
         <Table className="table-fixed w-full min-w-[1100px]">
           <TableHeader>
             <TableRow className="bg-secondary/60 hover:bg-secondary/60">
-              <TableHead className="pl-6">Lékař</TableHead>
-              <TableHead className="w-[150px] text-right">Odeslaní pacienti</TableHead>
-              <TableHead className="w-[160px] text-right">Objem žádanek, Kč</TableHead>
-              <TableHead className="w-[130px] text-right">Provize, Kč</TableHead>
+              <TableHead className="pl-6">{t("Lékař")}</TableHead>
+              <TableHead className="w-[150px] text-right">{t("Odeslaní pacienti")}</TableHead>
+              <TableHead className="w-[160px] text-right">{t("Objem žádanek, Kč")}</TableHead>
+              <TableHead className="w-[130px] text-right">{t("Provize, Kč")}</TableHead>
               <TableHead className="w-[80px] text-right">K</TableHead>
-              <TableHead className="w-[140px] text-right">K výplatě, Kč</TableHead>
-              <TableHead className="w-[140px] text-right">Ošetřeno pacientů</TableHead>
-              <TableHead className="w-[90px] text-right">Vyplaceno</TableHead>
-              <TableHead className="w-[130px] pr-6 text-right">Koeficient</TableHead>
+              <TableHead className="w-[140px] text-right">{t("K výplatě, Kč")}</TableHead>
+              <TableHead className="w-[140px] text-right">{t("Ošetřeno pacientů")}</TableHead>
+              <TableHead className="w-[90px] text-right">{t("Vyplaceno")}</TableHead>
+              <TableHead className="w-[130px] pr-6 text-right">{t("Koeficient")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {doctors.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={9} className="py-10 text-center text-muted-foreground">
-                  Za období nejsou data
+                  {t("Za období nejsou data")}
                 </TableCell>
               </TableRow>
             ) : (
@@ -139,7 +140,7 @@ export function DoctorsTable({
                             </Badge>
                           }
                         />
-                        <TooltipContent>{getCoefficientTooltip(coef, bands)}</TooltipContent>
+                        <TooltipContent>{getCoefficientTooltip(coef, bands, t)}</TooltipContent>
                       </Tooltip>
                     </TableCell>
                   </TableRow>

@@ -1,9 +1,11 @@
 import { ChevronRight, TriangleAlert } from "lucide-react"
 import Link from "next/link"
+import { getI18n } from "@/lib/i18n/server"
 import { withPeriod } from "@/lib/period-link"
 
-export function AttentionBanner({ count, period }: { count: number; period: string }) {
+export async function AttentionBanner({ count, period }: { count: number; period: string }) {
   if (count <= 0) return null
+  const { tn } = await getI18n()
 
   return (
     <Link
@@ -12,7 +14,12 @@ export function AttentionBanner({ count, period }: { count: number; period: stri
     >
       <TriangleAlert className="size-5 shrink-0" />
       <span className="text-sm font-medium">
-        {count} {count === 1 ? "položka vyžaduje" : count < 5 ? "položky vyžadují" : "položek vyžaduje"} pozornost — zobrazit
+        {tn(
+          count,
+          "{n} položka vyžaduje pozornost — zobrazit",
+          "{n} položky vyžadují pozornost — zobrazit",
+          "{n} položek vyžaduje pozornost — zobrazit",
+        )}
       </span>
       <ChevronRight className="ml-auto size-4 shrink-0" />
     </Link>

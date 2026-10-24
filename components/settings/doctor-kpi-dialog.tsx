@@ -20,7 +20,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { assignDoctorKpiProfile, deleteDoctorKpiAssignment } from "@/app/(app)/settings/kpi/actions"
-import { formatMonth, monthInputToDate } from "@/lib/format"
+import { monthInputToDate } from "@/lib/format"
+import { useI18n } from "@/lib/i18n/client"
 import type { DoctorKpiBadge, DoctorKpiHistoryRow, MonthOption } from "@/lib/queries/kpi"
 import type { KpiProfile } from "@/lib/queries/kpi"
 
@@ -43,6 +44,7 @@ export function DoctorKpiDialog({
   defaultMonth: string
   monthOptions: MonthOption[]
 }) {
+  const { t, formatMonth } = useI18n()
   const [open, setOpen] = useState(false)
   const [profileId, setProfileId] = useState(current?.profile_id ?? NONE_VALUE)
   const [month, setMonth] = useState(defaultMonth)
@@ -59,8 +61,8 @@ export function DoctorKpiDialog({
     }
   }, [open, current, defaultMonth, monthOptions])
 
-  const profileItems: Record<string, string> = { [NONE_VALUE]: "Bez KPI" }
-  for (const p of profiles) profileItems[p.id] = p.name
+  const profileItems: Record<string, string> = { [NONE_VALUE]: t("Bez KPI") }
+  for (const p of profiles) profileItems[p.id] = t(p.name)
 
   const monthItems: Record<string, string> = {}
   for (const o of monthOptions) monthItems[o.value] = o.label
@@ -74,8 +76,8 @@ export function DoctorKpiDialog({
         monthInputToDate(month),
       )
       if (res.ok) {
-        toast.success("KPI profil byl aktualizován.", {
-          description: "Změny se projeví při dalším přepočtu měsíce.",
+        toast.success(t("KPI profil byl aktualizován."), {
+          description: t("Změny se projeví při dalším přepočtu měsíce."),
         })
         setOpen(false)
       } else {
@@ -88,14 +90,14 @@ export function DoctorKpiDialog({
     startTransition(async () => {
       const res = await deleteDoctorKpiAssignment(masterId, id)
       if (res.ok) {
-        toast.success("Záznam historie byl smazán.")
+        toast.success(t("Záznam historie byl smazán."))
       } else {
         toast.error(res.error)
       }
     })
   }
 
-  const currentLabel = current?.profile_name ?? "Bez KPI"
+  const currentLabel = current?.profile_name ? t(current.profile_name) : t("Bez KPI")
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -110,7 +112,7 @@ export function DoctorKpiDialog({
             ) : (
               <Badge variant="outline" className="gap-1 text-muted-foreground">
                 <Gauge className="size-3" />
-                Bez KPI
+                {t("Bez KPI")}
               </Badge>
             )}
           </button>
@@ -119,12 +121,12 @@ export function DoctorKpiDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>KPI: {doctorName}</DialogTitle>
-          <DialogDescription>Upravuje provizi za žádanky koeficientem K od zvoleného měsíce.</DialogDescription>
+          <DialogDescription>{t("Upravuje provizi za žádanky koeficientem K od zvoleného měsíce.")}</DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <Label htmlFor="doctor-kpi-profile">Profil</Label>
+            <Label htmlFor="doctor-kpi-profile">{t("Profil")}</Label>
             <Select
               value={profileId}
               onValueChange={(v) => {
@@ -141,10 +143,10 @@ export function DoctorKpiDialog({
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  <SelectItem value={NONE_VALUE}>Bez KPI</SelectItem>
+                  <SelectItem value={NONE_VALUE}>{t("Bez KPI")}</SelectItem>
                   {profiles.map((p) => (
                     <SelectItem key={p.id} value={p.id}>
-                      {p.name}
+                      {t(p.name)}
                     </SelectItem>
                   ))}
                 </SelectGroup>
@@ -153,7 +155,7 @@ export function DoctorKpiDialog({
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="doctor-kpi-valid-from">Platí od</Label>
+            <Label htmlFor="doctor-kpi-valid-from">{t("Platí od")}</Label>
             <Select
               value={month}
               onValueChange={(v) => {
@@ -184,12 +186,12 @@ export function DoctorKpiDialog({
 
           <Alert>
             <TriangleAlert />
-            <AlertDescription>Zmrazené měsíce nejsou dostupné k výběru.</AlertDescription>
+            <AlertDescription>{t("Zmrazené měsíce nejsou dostupné k výběru.")}</AlertDescription>
           </Alert>
 
           {history.length > 0 ? (
             <div className="flex flex-col gap-1.5">
-              <span className="text-sm font-medium text-foreground">Historie</span>
+              <span className="text-sm font-medium text-foreground">{t("Historie")}</span>
               <ul className="flex flex-col gap-1 text-sm text-muted-foreground">
                 {history.map((h, i) => {
                   const monthValue = h.valid_from.slice(0, 7)
@@ -197,8 +199,8 @@ export function DoctorKpiDialog({
                   return (
                     <li key={h.id} className="flex items-center justify-between gap-2">
                       <span>
-                        {h.profile_name ?? "Bez KPI"} · {formatMonth(h.valid_from)} –{" "}
-                        {h.valid_to ? formatMonth(h.valid_to) : "dosud"}
+                        {h.profile_name ? t(h.profile_name) : t("Bez KPI")} · {formatMonth(h.valid_from)} –{" "}
+                        {h.valid_to ? formatMonth(h.valid_to) : t("dosud")}
                       </span>
                       {canDelete ? (
                         <button
@@ -206,7 +208,7 @@ export function DoctorKpiDialog({
                           onClick={() => handleDelete(h.id)}
                           disabled={pending}
                           className="shrink-0 text-muted-foreground transition-colors hover:text-destructive disabled:opacity-50"
-                          aria-label="Smazat poslední záznam historie"
+                          aria-label={t("Smazat poslední záznam historie")}
                         >
                           <Trash2 className="size-3.5" />
                         </button>
@@ -220,10 +222,10 @@ export function DoctorKpiDialog({
         </div>
 
         <DialogFooter>
-          <DialogClose render={<Button variant="ghost">Zrušit</Button>} />
+          <DialogClose render={<Button variant="ghost">{t("Zrušit")}</Button>} />
           <Button onClick={save} disabled={pending}>
             {pending ? <Spinner data-icon="inline-start" /> : null}
-            Uložit
+            {t("Uložit")}
           </Button>
         </DialogFooter>
       </DialogContent>

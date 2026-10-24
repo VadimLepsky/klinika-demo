@@ -6,9 +6,11 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import { flagStaff } from "@/app/(app)/attention/actions"
+import { useI18n } from "@/lib/i18n/client"
 import type { UnflaggedStaff } from "@/lib/queries/attention"
 
 export function StaffItem({ staff }: { staff: UnflaggedStaff }) {
+  const { t } = useI18n()
   const [pending, startTransition] = useTransition()
 
   const flag = (isDoctor: boolean) => {
@@ -17,8 +19,8 @@ export function StaffItem({ staff }: { staff: UnflaggedStaff }) {
       if (res.ok) {
         toast.success(
           isDoctor
-            ? `«${staff.full_name}» byl(a) označen(a) jako lékař.`
-            : `«${staff.full_name}» byl(a) označen(a) jako nelékař.`,
+            ? t("«{name}» byl(a) označen(a) jako lékař.", { name: staff.full_name })
+            : t("«{name}» byl(a) označen(a) jako nelékař.", { name: staff.full_name }),
         )
       } else {
         toast.error(res.error)
@@ -29,17 +31,17 @@ export function StaffItem({ staff }: { staff: UnflaggedStaff }) {
   return (
     <div className="flex flex-col gap-3 rounded-lg border border-border p-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex flex-col gap-1">
-        <span className="font-medium text-foreground text-pretty">{staff.full_name}</span>
-        {staff.note ? <span className="text-xs text-muted-foreground">{staff.note}</span> : null}
+        <span className="font-medium text-foreground text-pretty">{t(staff.full_name)}</span>
+        {staff.note ? <span className="text-xs text-muted-foreground">{t(staff.note)}</span> : null}
       </div>
       <div className="flex gap-2">
         <Button size="sm" onClick={() => flag(true)} disabled={pending}>
           {pending ? <Spinner data-icon="inline-start" /> : <UserCheck data-icon="inline-start" />}
-          Lékař
+          {t("Lékař")}
         </Button>
         <Button size="sm" variant="outline" onClick={() => flag(false)} disabled={pending}>
           <UserX data-icon="inline-start" />
-          Není lékař
+          {t("Není lékař")}
         </Button>
       </div>
     </div>

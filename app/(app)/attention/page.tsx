@@ -18,9 +18,11 @@ import {
   getBucketOptions,
 } from "@/lib/queries/attention"
 import { getUnresolvedUnmatchedLines } from "@/lib/queries/unresolved"
+import { getI18n } from "@/lib/i18n/server"
 
-export const metadata = {
-  title: "Vyžaduje pozornost",
+export async function generateMetadata() {
+  const { t } = await getI18n()
+  return { title: t("Vyžaduje pozornost") }
 }
 
 export const dynamic = "force-dynamic"
@@ -57,14 +59,15 @@ function SectionCard({
   )
 }
 
-function ResolvedEmpty({ label }: { label: string }) {
+async function ResolvedEmpty({ label }: { label: string }) {
+  const { t } = await getI18n()
   return (
     <Empty className="border border-dashed border-border">
       <EmptyHeader>
         <EmptyMedia variant="icon">
           <Check className="size-5" />
         </EmptyMedia>
-        <EmptyTitle>Vše vyřešeno</EmptyTitle>
+        <EmptyTitle>{t("Vše vyřešeno")}</EmptyTitle>
         <EmptyDescription>{label}</EmptyDescription>
       </EmptyHeader>
     </Empty>
@@ -77,6 +80,7 @@ export default async function AttentionPage({
   searchParams: Promise<{ period?: string }>
 }) {
   const { period: periodParam } = await searchParams
+  const { t, tn } = await getI18n()
   const periods = await getPeriods()
 
   // ?period= if present and valid → otherwise no filter ("Všechna období"), since this
@@ -101,12 +105,17 @@ export default async function AttentionPage({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-semibold tracking-tight text-foreground text-balance">
-            Vyžaduje pozornost
+            {t("Vyžaduje pozornost")}
           </h1>
           <p className="text-sm text-muted-foreground">
             {total > 0
-              ? `${total} položek čeká na vaše rozhodnutí před výpočtem provizí.`
-              : "Žádné otevřené položky — vše je vyřešeno."}
+              ? tn(
+                  total,
+                  "{n} položka čeká na vaše rozhodnutí před výpočtem provizí.",
+                  "{n} položky čekají na vaše rozhodnutí před výpočtem provizí.",
+                  "{n} položek čeká na vaše rozhodnutí před výpočtem provizí.",
+                )
+              : t("Žádné otevřené položky — vše je vyřešeno.")}
           </p>
         </div>
         <MonthSelector periods={periods} current={selected} allowAll />
@@ -115,42 +124,42 @@ export default async function AttentionPage({
       <SectionCard
         id="sources"
         icon={Users}
-        title="Nepřiřazené zdroje"
-        description="Zdroje pacientů bez vazby na lékaře (všechna období)."
+        title={t("Nepřiřazené zdroje")}
+        description={t("Zdroje pacientů bez vazby na lékaře (všechna období).")}
         count={sources.length}
       >
         {sources.length > 0 ? (
           sources.map((s) => <SourceItem key={s.source_id} source={s} doctors={doctors} />)
         ) : (
-          <ResolvedEmpty label="Všechny zdroje jsou přiřazené nebo označené bez provize." />
+          <ResolvedEmpty label={t("Všechny zdroje jsou přiřazené nebo označené bez provize.")} />
         )}
       </SectionCard>
 
       <SectionCard
         id="staff"
         icon={UserCog}
-        title="Zaměstnanci bez označení"
-        description="Personál, u kterého není určeno, zda jde o lékaře (všechna období)."
+        title={t("Zaměstnanci bez označení")}
+        description={t("Personál, u kterého není určeno, zda jde o lékaře (všechna období).")}
         count={staff.length}
       >
         {staff.length > 0 ? (
           staff.map((s) => <StaffItem key={s.master_id} staff={s} />)
         ) : (
-          <ResolvedEmpty label="Všichni zaměstnanci jsou označeni." />
+          <ResolvedEmpty label={t("Všichni zaměstnanci jsou označeni.")} />
         )}
       </SectionCard>
 
       <SectionCard
         id="categories"
         icon={Tags}
-        title="Nové kategorie bez sazby"
-        description="Kategorie služeb, kterým nebylo přiřazeno pravidlo pro výpočet provize."
+        title={t("Nové kategorie bez sazby")}
+        description={t("Kategorie služeb, kterým nebylo přiřazeno pravidlo pro výpočet provize.")}
         count={categories.length}
       >
         {categories.length > 0 ? (
           categories.map((c) => <CategoryItem key={c.category_id} category={c} buckets={buckets} />)
         ) : (
-          <ResolvedEmpty label="Všechny kategorie jsou přiřazené k pravidlům." />
+          <ResolvedEmpty label={t("Všechny kategorie jsou přiřazené k pravidlům.")} />
         )}
       </SectionCard>
 

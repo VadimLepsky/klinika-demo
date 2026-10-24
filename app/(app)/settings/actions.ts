@@ -1,5 +1,6 @@
 "use server"
 
+import { actionError, tr } from "@/lib/i18n/server"
 import { revalidatePath } from "next/cache"
 import { db, newId } from "@/lib/demo/store"
 import { writeAudit } from "@/lib/audit"
@@ -27,24 +28,24 @@ export async function createBucket(
   const cleanLabel = label.trim()
   const cleanKey = key.trim().toLowerCase()
 
-  if (cleanLabel.length < 2) return { ok: false, error: "Zadejte název pravidla." }
+  if (cleanLabel.length < 2) return { ok: false, error: await tr("Zadejte název pravidla.") }
   if (!/^[a-z][a-z0-9_]{1,39}$/.test(cleanKey)) {
-    return { ok: false, error: "Klíč: pouze malá písmena bez diakritiky, číslice a podtržítka, od 2 znaků." }
+    return { ok: false, error: await tr("Klíč: pouze malá písmena bez diakritiky, číslice a podtržítka, od 2 znaků.") }
   }
   if (beneficiary !== "source" && beneficiary !== "performer") {
-    return { ok: false, error: "Zvolte příjemce." }
+    return { ok: false, error: await tr("Zvolte příjemce.") }
   }
   if (!Number.isFinite(ratePercent) || ratePercent < 0 || ratePercent > 100) {
-    return { ok: false, error: "Sazba musí být v rozmezí 0–100 %." }
+    return { ok: false, error: await tr("Sazba musí být v rozmezí 0–100 %.") }
   }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(validFrom)) {
-    return { ok: false, error: "Neplatné datum." }
+    return { ok: false, error: await tr("Neplatné datum.") }
   }
 
   try {
     const state = db()
     if (state.buckets.some((b) => b.bucket === cleanKey)) {
-      return { ok: false, error: "Tento klíč se už používá." }
+      return { ok: false, error: await tr("Tento klíč se už používá.") }
     }
 
     const nextSort =
@@ -77,18 +78,18 @@ export async function createBucket(
     revalidateBucketPaths()
     return { ok: true, bucket: { bucket: cleanKey, label: cleanLabel } }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Chyba" }
+    return { ok: false, error: await actionError(e) }
   }
 }
 
 /** Renames a bucket's label. Key and beneficiary are immutable here. */
 export async function updateBucketLabel(bucket: string, label: string): Promise<ActionResult> {
   const cleanLabel = label.trim()
-  if (cleanLabel.length < 2) return { ok: false, error: "Zadejte název pravidla." }
+  if (cleanLabel.length < 2) return { ok: false, error: await tr("Zadejte název pravidla.") }
   try {
     const state = db()
     const row = state.buckets.find((b) => b.bucket === bucket)
-    if (!row) return { ok: false, error: "Pravidlo nebylo nalezeno." }
+    if (!row) return { ok: false, error: await tr("Pravidlo nebylo nalezeno.") }
 
     const old = row.label
     row.label = cleanLabel
@@ -103,7 +104,7 @@ export async function updateBucketLabel(bucket: string, label: string): Promise<
     revalidateBucketPaths()
     return { ok: true }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Chyba" }
+    return { ok: false, error: await actionError(e) }
   }
 }
 
@@ -112,14 +113,14 @@ export async function deleteBucket(bucket: string): Promise<ActionResult> {
   try {
     const state = db()
     const old = state.buckets.find((b) => b.bucket === bucket)
-    if (!old) return { ok: false, error: "Pravidlo nebylo nalezeno." }
+    if (!old) return { ok: false, error: await tr("Pravidlo nebylo nalezeno.") }
 
     const catCount = state.categoryMapping.filter((cm) => cm.bucket === bucket).length
     const monthlyCount = state.commissionMonthly.filter((m) => m.bucket === bucket).length
     const svcCount = state.serviceMapping.filter((sm) => sm.bucket === bucket).length
 
     if (catCount > 0 || monthlyCount > 0 || svcCount > 0) {
-      return { ok: false, error: "Pravidlo se používá a nelze ho smazat." }
+      return { ok: false, error: await tr("Pravidlo se používá a nelze ho smazat.") }
     }
 
     state.bucketRates = state.bucketRates.filter((r) => r.bucket !== bucket)
@@ -135,7 +136,7 @@ export async function deleteBucket(bucket: string): Promise<ActionResult> {
     revalidateBucketPaths()
     return { ok: true }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Chyba" }
+    return { ok: false, error: await actionError(e) }
   }
 }
 
@@ -150,7 +151,7 @@ export async function updateRate(
   validFrom: string,
 ): Promise<ActionResult> {
   if (!Number.isFinite(ratePercent) || ratePercent < 0 || ratePercent > 100) {
-    return { ok: false, error: "Sazba musí být v rozmezí 0–100 %." }
+    return { ok: false, error: await tr("Sazba musí být v rozmezí 0–100 %.") }
   }
   const rate = Math.round((ratePercent / 100) * 10000) / 10000
   try {
@@ -177,7 +178,7 @@ export async function updateRate(
     revalidatePath("/settings/buckets")
     return { ok: true }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Chyba" }
+    return { ok: false, error: await actionError(e) }
   }
 }
 
@@ -189,7 +190,7 @@ export async function addServiceExclusion(
 ): Promise<ActionResult> {
   const id = Number(serviceId)
   if (!Number.isInteger(id) || id <= 0) {
-    return { ok: false, error: "Neplatné ID služby." }
+    return { ok: false, error: await tr("Neplatné ID služby.") }
   }
   try {
     const state = db()
@@ -210,7 +211,7 @@ export async function addServiceExclusion(
     revalidatePath("/settings/mapping")
     return { ok: true }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Chyba" }
+    return { ok: false, error: await actionError(e) }
   }
 }
 
@@ -232,7 +233,7 @@ export async function endServiceExclusion(id: string): Promise<ActionResult> {
     revalidatePath("/settings/mapping")
     return { ok: true }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Chyba" }
+    return { ok: false, error: await actionError(e) }
   }
 }
 
@@ -244,10 +245,10 @@ export async function updateSource(
   note: string | null,
 ): Promise<ActionResult> {
   const allowed = ["doctor", "non_commission", "unmapped"]
-  if (!allowed.includes(status)) return { ok: false, error: "Neplatný stav." }
+  if (!allowed.includes(status)) return { ok: false, error: await tr("Neplatný stav.") }
   const effectiveMaster = status === "doctor" ? masterId : null
   if (status === "doctor" && !effectiveMaster) {
-    return { ok: false, error: "Pro stav «Lékař» zvolte lékaře." }
+    return { ok: false, error: await tr("Pro stav «Lékař» zvolte lékaře.") }
   }
   try {
     const state = db()
@@ -271,7 +272,7 @@ export async function updateSource(
     revalidatePath("/periods")
     return { ok: true }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Chyba" }
+    return { ok: false, error: await actionError(e) }
   }
 }
 
@@ -302,7 +303,7 @@ export async function updateStaff(
     revalidatePath("/periods")
     return { ok: true }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Chyba" }
+    return { ok: false, error: await actionError(e) }
   }
 }
 
@@ -328,14 +329,14 @@ export async function saveDoctorBucketRates(
   const actor = await getActorEmail()
 
   if (!/^\d{4}-\d{2}-\d{2}$/.test(validFrom)) {
-    return { ok: false, error: "Neplatné datum." }
+    return { ok: false, error: await tr("Neplatné datum.") }
   }
 
   try {
     const state = db()
     const period = state.periods.find((p) => p.period === validFrom)
     if (period?.status === "frozen") {
-      return { ok: false, error: "Měsíc je zmrazen — zvolte jiný." }
+      return { ok: false, error: await tr("Měsíc je zmrazen — zvolte jiný.") }
     }
 
     const validBuckets = new Set(state.buckets.map((b) => b.bucket))
@@ -360,7 +361,7 @@ export async function saveDoctorBucketRates(
         desired = { enabled: true, rate: null }
       } else {
         if (!Number.isFinite(rule.ratePct) || rule.ratePct < 0 || rule.ratePct > 100) {
-          return { ok: false, error: "Sazba musí být v rozmezí 0–100 %." }
+          return { ok: false, error: await tr("Sazba musí být v rozmezí 0–100 %.") }
         }
         desired = { enabled: true, rate: Math.round((rule.ratePct / 100) * 10000) / 10000 }
       }
@@ -409,6 +410,6 @@ export async function saveDoctorBucketRates(
     revalidatePath("/settings/staff")
     return { ok: true }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Chyba" }
+    return { ok: false, error: await actionError(e) }
   }
 }

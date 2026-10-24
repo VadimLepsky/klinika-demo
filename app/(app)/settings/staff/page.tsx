@@ -15,12 +15,17 @@ import {
   getKpiAssignableMonths,
 } from "@/lib/queries/kpi"
 import type { DoctorRateRule } from "@/components/settings/doctor-rates-dialog"
+import { getI18n } from "@/lib/i18n/server"
 
-export const metadata = { title: "Zaměstnanci" }
+export async function generateMetadata() {
+  const { t } = await getI18n()
+  return { title: t("Zaměstnanci") }
+}
 
 export const dynamic = "force-dynamic"
 
 export default async function StaffPage() {
+  const { t } = await getI18n()
   const [
     staff,
     buckets,
@@ -56,9 +61,9 @@ export default async function StaffPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Zaměstnanci</CardTitle>
+        <CardTitle>{t("Zaměstnanci")}</CardTitle>
         <CardDescription>
-          Označení «lékař» určuje, kdo může dostávat provizi za žádanky.
+          {t("Označení «lékař» určuje, kdo může dostávat provizi za žádanky.")}
         </CardDescription>
       </CardHeader>
       <CardContent>

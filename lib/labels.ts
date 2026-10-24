@@ -1,3 +1,5 @@
+import type { TFunction } from "@/lib/i18n/translate"
+
 const ENTITY_LABEL: Record<string, string> = {
   periods: "Období",
   sources: "Zdroje",
@@ -18,7 +20,8 @@ const ENTITY_LABEL: Record<string, string> = {
   doctor_bucket_rates: "Osobní sazby",
 }
 
-/** Czech label for an audit_log entity name. */
-export function entityLabel(entity: string): string {
-  return ENTITY_LABEL[entity] ?? entity
+/** Localized label for an audit_log entity name. */
+export function entityLabel(entity: string, t: TFunction): string {
+  const label = ENTITY_LABEL[entity]
+  return label ? t(label) : entity
 }

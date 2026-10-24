@@ -26,8 +26,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { inviteUser } from "@/lib/user-actions"
-
-const ROLE_ITEMS = { admin: "Administrátor", viewer: "Prohlížení" }
+import { useI18n } from "@/lib/i18n/client"
 
 export function InviteUserDialog({
   trigger,
@@ -36,6 +35,8 @@ export function InviteUserDialog({
   trigger: React.ReactElement
   onInvited?: () => void
 }) {
+  const { t } = useI18n()
+  const ROLE_ITEMS = { admin: t("Administrátor"), viewer: t("Prohlížení") }
   const [open, setOpen] = useState(false)
   const [fullName, setFullName] = useState("")
   const [email, setEmail] = useState("")
@@ -59,7 +60,7 @@ export function InviteUserDialog({
 
   const save = () => {
     if (!fullName.trim() || !email.trim()) {
-      toast.error("Vyplňte jméno a e-mail.")
+      toast.error(t("Vyplňte jméno a e-mail."))
       return
     }
     const fd = new FormData()
@@ -72,7 +73,7 @@ export function InviteUserDialog({
         setTempPassword(res.tempPassword)
         onInvited?.()
       } catch (e) {
-        toast.error(e instanceof Error ? e.message : "Uživatele se nepodařilo vytvořit.")
+        toast.error(e instanceof Error ? e.message : t("Uživatele se nepodařilo vytvořit."))
       }
     })
   }
@@ -84,7 +85,7 @@ export function InviteUserDialog({
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch {
-      toast.error("Nepodařilo se zkopírovat.")
+      toast.error(t("Nepodařilo se zkopírovat."))
     }
   }
 
@@ -95,14 +96,14 @@ export function InviteUserDialog({
         {tempPassword ? (
           <>
             <DialogHeader>
-              <DialogTitle>Uživatel byl vytvořen</DialogTitle>
+              <DialogTitle>{t("Uživatel byl vytvořen")}</DialogTitle>
               <DialogDescription>
-                Předejte dočasné heslo kolegovi osobně. Po zavření okna se už nezobrazí.
+                {t("Předejte dočasné heslo kolegovi osobně. Po zavření okna se už nezobrazí.")}
               </DialogDescription>
             </DialogHeader>
 
             <Field>
-              <FieldLabel htmlFor="temp-password">Dočasné heslo</FieldLabel>
+              <FieldLabel htmlFor="temp-password">{t("Dočasné heslo")}</FieldLabel>
               <div className="flex items-center gap-2">
                 <Input
                   id="temp-password"
@@ -111,50 +112,50 @@ export function InviteUserDialog({
                   className="font-mono"
                   onFocus={(e) => e.currentTarget.select()}
                 />
-                <Button type="button" variant="outline" size="icon" onClick={copy} aria-label="Zkopírovat heslo">
+                <Button type="button" variant="outline" size="icon" onClick={copy} aria-label={t("Zkopírovat heslo")}>
                   {copied ? <Check /> : <Copy />}
                 </Button>
               </div>
-              <FieldDescription>Uložte si ho hned — dál se už nezobrazí.</FieldDescription>
+              <FieldDescription>{t("Uložte si ho hned — dál se už nezobrazí.")}</FieldDescription>
             </Field>
 
             <DialogFooter>
-              <DialogClose render={<Button>Hotovo</Button>} />
+              <DialogClose render={<Button>{t("Hotovo")}</Button>} />
             </DialogFooter>
           </>
         ) : (
           <>
             <DialogHeader>
-              <DialogTitle>Pozvat uživatele</DialogTitle>
+              <DialogTitle>{t("Pozvat uživatele")}</DialogTitle>
               <DialogDescription>
-                Vytvoří se účet s dočasným heslem, které uvidíte jen jednou.
+                {t("Vytvoří se účet s dočasným heslem, které uvidíte jen jednou.")}
               </DialogDescription>
             </DialogHeader>
 
             <FieldGroup>
               <Field>
-                <FieldLabel htmlFor="invite-name">Celé jméno</FieldLabel>
+                <FieldLabel htmlFor="invite-name">{t("Celé jméno")}</FieldLabel>
                 <Input
                   id="invite-name"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  placeholder="např. Helena Kovářová"
+                  placeholder={t("např. Helena Kovářová")}
                   disabled={pending}
                 />
               </Field>
               <Field>
-                <FieldLabel htmlFor="invite-email">E-mail</FieldLabel>
+                <FieldLabel htmlFor="invite-email">{t("E-mail")}</FieldLabel>
                 <Input
                   id="invite-email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="např. helena@demo.clinic"
+                  placeholder={t("např. helena@demo.clinic")}
                   disabled={pending}
                 />
               </Field>
               <Field>
-                <FieldLabel htmlFor="invite-role">Role</FieldLabel>
+                <FieldLabel htmlFor="invite-role">{t("Role")}</FieldLabel>
                 <Select
                   value={role}
                   onValueChange={(next) => next && setRole(next)}
@@ -166,22 +167,22 @@ export function InviteUserDialog({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
-                      <SelectItem value="admin">Administrátor</SelectItem>
-                      <SelectItem value="viewer">Prohlížení</SelectItem>
+                      <SelectItem value="admin">{t("Administrátor")}</SelectItem>
+                      <SelectItem value="viewer">{t("Prohlížení")}</SelectItem>
                     </SelectGroup>
                   </SelectContent>
                 </Select>
                 <FieldDescription>
-                  «Administrátor» může měnit data, «Prohlížení» jen číst.
+                  {t("«Administrátor» může měnit data, «Prohlížení» jen číst.")}
                 </FieldDescription>
               </Field>
             </FieldGroup>
 
             <DialogFooter>
-              <DialogClose render={<Button variant="ghost">Zrušit</Button>} />
+              <DialogClose render={<Button variant="ghost">{t("Zrušit")}</Button>} />
               <Button onClick={save} disabled={pending}>
                 {pending ? <Spinner data-icon="inline-start" /> : <ShieldCheck data-icon="inline-start" />}
-                Vytvořit
+                {t("Vytvořit")}
               </Button>
             </DialogFooter>
           </>

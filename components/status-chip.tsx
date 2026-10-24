@@ -1,4 +1,7 @@
+"use client"
+
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { useI18n } from "@/lib/i18n/client"
 import { cn } from "@/lib/utils"
 
 export type LineStatus = "accrued" | "skipped" | "pending_review" | "unmatched"
@@ -23,6 +26,7 @@ const STATUS_META: Record<LineStatus, { label: string; className: string }> = {
 }
 
 export function StatusChip({ status, reason }: { status: LineStatus; reason?: string | null }) {
+  const { t } = useI18n()
   const meta = STATUS_META[status] ?? STATUS_META.skipped
   const chip = (
     <span
@@ -31,7 +35,7 @@ export function StatusChip({ status, reason }: { status: LineStatus; reason?: st
         meta.className,
       )}
     >
-      {meta.label}
+      {t(meta.label)}
     </span>
   )
 
@@ -40,7 +44,7 @@ export function StatusChip({ status, reason }: { status: LineStatus; reason?: st
   return (
     <Tooltip>
       <TooltipTrigger render={chip} />
-      <TooltipContent>{reason}</TooltipContent>
+      <TooltipContent>{t(reason)}</TooltipContent>
     </Tooltip>
   )
 }

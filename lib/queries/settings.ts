@@ -1,6 +1,7 @@
 import "server-only"
 import { db } from "@/lib/demo/store"
 import { periodKey } from "@/lib/format"
+import { getI18n } from "@/lib/i18n/server"
 
 const bySortOrder = (a: { sort_order: number | null; bucket: string }, b: { sort_order: number | null; bucket: string }) =>
   (a.sort_order ?? 1e9) - (b.sort_order ?? 1e9) || a.bucket.localeCompare(b.bucket)
@@ -131,6 +132,7 @@ export type ServiceExclusionRow = {
 
 export async function getServiceExclusions(): Promise<ServiceExclusionRow[]> {
   const state = db()
+  const { t } = await getI18n()
   return state.serviceExclusions
     .slice()
     .sort((a, b) => {
@@ -143,7 +145,7 @@ export async function getServiceExclusions(): Promise<ServiceExclusionRow[]> {
       service_id: se.service_id,
       service_name:
         state.servicesCatalog.find((sc) => sc.service_id === se.service_id)?.name ??
-        `Služba ${se.service_id}`,
+        t("Služba {id}", { id: se.service_id }),
       reason: se.reason ?? null,
       valid_from: se.valid_from,
       valid_to: se.valid_to,
@@ -162,6 +164,7 @@ export type ServiceMappingRow = {
 
 export async function getServiceMappings(): Promise<ServiceMappingRow[]> {
   const state = db()
+  const { t } = await getI18n()
   return state.serviceMapping
     .slice()
     .sort((a, b) => {
@@ -174,7 +177,7 @@ export async function getServiceMappings(): Promise<ServiceMappingRow[]> {
       service_id: sm.service_id,
       service_name:
         state.servicesCatalog.find((sc) => sc.service_id === sm.service_id)?.name ??
-        `Služba ${sm.service_id}`,
+        t("Služba {id}", { id: sm.service_id }),
       bucket: sm.bucket,
       bucket_label: state.buckets.find((b) => b.bucket === sm.bucket)?.label ?? null,
       valid_from: sm.valid_from,

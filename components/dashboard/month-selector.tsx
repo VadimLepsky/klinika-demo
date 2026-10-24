@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
-import { formatMonth } from "@/lib/format"
+import { useI18n } from "@/lib/i18n/client"
 import type { Period } from "@/lib/queries/dashboard"
 
 const MONTHS_SHORT_CS = [
@@ -38,6 +38,7 @@ export function MonthSelector({
   current: string | null
   allowAll?: boolean
 }) {
+  const { t, formatMonth } = useI18n()
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -99,7 +100,7 @@ export function MonthSelector({
         <PopoverTrigger
           render={
             <Button variant="outline" className="w-[220px] justify-between">
-              <span>{current ? formatMonth(current) : "Všechna období"}</span>
+              <span>{current ? formatMonth(current) : t("Všechna období")}</span>
               <ChevronDown data-icon="inline-end" />
             </Button>
           }
@@ -113,7 +114,7 @@ export function MonthSelector({
               className="mb-2 w-full"
               onClick={handleSelectAll}
             >
-              Všechna období
+              {t("Všechna období")}
             </Button>
           ) : null}
           <div className="flex items-center justify-between">
@@ -122,7 +123,7 @@ export function MonthSelector({
               size="icon-sm"
               disabled={!canGoPrevYear}
               onClick={() => setYear(years[yearIndex - 1])}
-              aria-label="Předchozí rok"
+              aria-label={t("Předchozí rok")}
             >
               <ChevronLeft />
             </Button>
@@ -132,7 +133,7 @@ export function MonthSelector({
               size="icon-sm"
               disabled={!canGoNextYear}
               onClick={() => setYear(years[yearIndex + 1])}
-              aria-label="Následující rok"
+              aria-label={t("Následující rok")}
             >
               <ChevronRight />
             </Button>
@@ -153,7 +154,7 @@ export function MonthSelector({
                   onClick={() => period && handleSelectMonth(period.period)}
                   className="relative w-full"
                 >
-                  {label}
+                  {t(label)}
                   {isFrozen ? (
                     <Lock
                       className={cn(
@@ -171,7 +172,7 @@ export function MonthSelector({
       {currentPeriod?.status === "frozen" ? (
         <Badge variant="secondary" className="gap-1">
           <Lock className="size-3" />
-          Uzavřeno
+          {t("Uzavřeno")}
         </Badge>
       ) : null}
     </div>

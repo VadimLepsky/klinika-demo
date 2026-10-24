@@ -17,6 +17,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { deleteUser } from "@/lib/user-actions"
+import { useI18n } from "@/lib/i18n/client"
 
 export function DeleteUserButton({
   userId,
@@ -30,6 +31,7 @@ export function DeleteUserButton({
   disabledReason?: string
   onDeleted?: () => void
 }) {
+  const { t } = useI18n()
   const [open, setOpen] = useState(false)
   const [pending, startTransition] = useTransition()
 
@@ -37,11 +39,11 @@ export function DeleteUserButton({
     startTransition(async () => {
       try {
         await deleteUser(userId)
-        toast.success(`Uživatel «${fullName}» byl smazán.`)
+        toast.success(t("Uživatel «{name}» byl smazán.", { name: fullName }))
         setOpen(false)
         onDeleted?.()
       } catch (e) {
-        toast.error(e instanceof Error ? e.message : "Chyba při mazání")
+        toast.error(e instanceof Error ? e.message : t("Chyba při mazání"))
       }
     })
   }
@@ -52,7 +54,7 @@ export function DeleteUserButton({
         <TooltipTrigger
           render={
             <span tabIndex={0} className="inline-block cursor-not-allowed">
-              <Button variant="ghost" size="icon" disabled aria-label="Smazat uživatele">
+              <Button variant="ghost" size="icon" disabled aria-label={t("Smazat uživatele")}>
                 <Trash2 />
               </Button>
             </span>
@@ -68,7 +70,7 @@ export function DeleteUserButton({
       <Button
         variant="ghost"
         size="icon"
-        aria-label="Smazat uživatele"
+        aria-label={t("Smazat uživatele")}
         onClick={() => setOpen(true)}
         className="text-muted-foreground hover:text-destructive"
       >
@@ -77,14 +79,14 @@ export function DeleteUserButton({
       <AlertDialog open={open} onOpenChange={setOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Smazat uživatele {fullName}?</AlertDialogTitle>
-            <AlertDialogDescription>Přístup bude zrušen. Historie změn zůstane zachována.</AlertDialogDescription>
+            <AlertDialogTitle>{t("Smazat uživatele {name}?", { name: fullName })}</AlertDialogTitle>
+            <AlertDialogDescription>{t("Přístup bude zrušen. Historie změn zůstane zachována.")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={pending}>Zrušit</AlertDialogCancel>
+            <AlertDialogCancel disabled={pending}>{t("Zrušit")}</AlertDialogCancel>
             <AlertDialogAction variant="destructive" onClick={confirm} disabled={pending}>
               {pending ? <Spinner data-icon="inline-start" /> : null}
-              Smazat
+              {t("Smazat")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

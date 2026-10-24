@@ -10,11 +10,13 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
+import { useI18n } from "@/lib/i18n/client"
 import { entityLabel } from "@/lib/labels"
 
 const ALL = "__all__"
 
 export function EntityFilter({ entities, current }: { entities: string[]; current: string }) {
+  const { t } = useI18n()
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -27,8 +29,8 @@ export function EntityFilter({ entities, current }: { entities: string[]; curren
     router.push(qs ? `${pathname}?${qs}` : pathname)
   }
 
-  const items: Record<string, string> = { [ALL]: "Všechny objekty" }
-  for (const e of entities) items[e] = entityLabel(e)
+  const items: Record<string, string> = { [ALL]: t("Všechny objekty") }
+  for (const e of entities) items[e] = entityLabel(e, t)
 
   return (
     <Select value={current || ALL} onValueChange={onChange} items={items}>
@@ -37,10 +39,10 @@ export function EntityFilter({ entities, current }: { entities: string[]; curren
       </SelectTrigger>
       <SelectContent>
         <SelectGroup>
-          <SelectItem value={ALL}>Všechny objekty</SelectItem>
+          <SelectItem value={ALL}>{t("Všechny objekty")}</SelectItem>
           {entities.map((e) => (
             <SelectItem key={e} value={e}>
-              {entityLabel(e)}
+              {entityLabel(e, t)}
             </SelectItem>
           ))}
         </SelectGroup>

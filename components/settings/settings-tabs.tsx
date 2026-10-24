@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useI18n } from "@/lib/i18n/client"
 import { cn } from "@/lib/utils"
 
 const TABS = [
@@ -14,15 +15,16 @@ const TABS = [
 ]
 
 export function SettingsTabs() {
+  const { t } = useI18n()
   const pathname = usePathname()
   return (
-    <nav className="flex flex-wrap gap-1 border-b border-border" aria-label="Sekce nastavení">
-      {TABS.map((t) => {
-        const active = pathname === t.href
+    <nav className="flex flex-wrap gap-1 border-b border-border" aria-label={t("Sekce nastavení")}>
+      {TABS.map((tab) => {
+        const active = pathname === tab.href
         return (
           <Link
-            key={t.href}
-            href={t.href}
+            key={tab.href}
+            href={tab.href}
             aria-current={active ? "page" : undefined}
             className={cn(
               "-mb-px border-b-2 px-4 py-2 text-sm font-medium transition-colors",
@@ -31,7 +33,7 @@ export function SettingsTabs() {
                 : "border-transparent text-muted-foreground hover:text-foreground",
             )}
           >
-            {t.label}
+            {t(tab.label)}
           </Link>
         )
       })}

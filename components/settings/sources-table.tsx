@@ -19,6 +19,7 @@ import {
 import { updateSource } from "@/app/(app)/settings/actions"
 import type { SourceRow } from "@/lib/queries/settings"
 import type { StaffOption } from "@/lib/queries/attention"
+import { useI18n } from "@/lib/i18n/client"
 
 const STATUS_LABEL: Record<string, string> = {
   doctor: "Lékař",
@@ -27,6 +28,11 @@ const STATUS_LABEL: Record<string, string> = {
 }
 
 function SourceRowItem({ row, doctors }: { row: SourceRow; doctors: StaffOption[] }) {
+  const { t } = useI18n()
+  const statusItems = useMemo(
+    () => Object.fromEntries(Object.entries(STATUS_LABEL).map(([k, v]) => [k, t(v)])),
+    [t],
+  )
   const [status, setStatus] = useState(row.status)
   const [master, setMaster] = useState(row.master_id ?? "")
   const [note] = useState(row.note ?? "")
@@ -43,26 +49,26 @@ function SourceRowItem({ row, doctors }: { row: SourceRow; doctors: StaffOption[
   const save = () => {
     startTransition(async () => {
       const res = await updateSource(row.source_id, status, master || null, note || null)
-      if (res.ok) toast.success(`Zdroj «${row.label}» uložen.`)
+      if (res.ok) toast.success(t("Zdroj «{name}» uložen.", { name: t(row.label) }))
       else toast.error(res.error)
     })
   }
 
   return (
     <TableRow>
-      <TableCell className="max-w-0 truncate pl-4 font-medium text-foreground" title={row.label}>
-        {row.label}
+      <TableCell className="max-w-0 truncate pl-4 font-medium text-foreground" title={t(row.label)}>
+        {t(row.label)}
       </TableCell>
       <TableCell>
-        <Select value={status} onValueChange={setStatus} disabled={pending} items={STATUS_LABEL}>
+        <Select value={status} onValueChange={setStatus} disabled={pending} items={statusItems}>
           <SelectTrigger className="w-full">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
-              <SelectItem value="doctor">Lékař</SelectItem>
-              <SelectItem value="non_commission">Bez provize</SelectItem>
-              <SelectItem value="unmapped">Nepřiřazeno</SelectItem>
+              <SelectItem value="doctor">{t("Lékař")}</SelectItem>
+              <SelectItem value="non_commission">{t("Bez provize")}</SelectItem>
+              <SelectItem value="unmapped">{t("Nepřiřazeno")}</SelectItem>
             </SelectGroup>
           </SelectContent>
         </Select>
@@ -91,7 +97,7 @@ function SourceRowItem({ row, doctors }: { row: SourceRow; doctors: StaffOption[
       <TableCell className="whitespace-nowrap text-right pr-4">
         <Button size="sm" onClick={save} disabled={pending || !dirty}>
           {pending ? <Spinner data-icon="inline-start" /> : null}
-          Uložit
+          {t("Uložit")}
         </Button>
       </TableCell>
     </TableRow>
@@ -99,6 +105,7 @@ function SourceRowItem({ row, doctors }: { row: SourceRow; doctors: StaffOption[
 }
 
 export function SourcesTable({ sources, doctors }: { sources: SourceRow[]; doctors: StaffOption[] }) {
+  const { t } = useI18n()
   const [q, setQ] = useState("")
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase()
@@ -106,9 +113,10 @@ export function SourcesTable({ sources, doctors }: { sources: SourceRow[]; docto
     return sources.filter(
       (s) =>
         s.label.toLowerCase().includes(needle) ||
+        t(s.label).toLowerCase().includes(needle) ||
         (s.doctor_name ?? "").toLowerCase().includes(needle),
     )
-  }, [q, sources])
+  }, [q, sources, t])
 
   return (
     <div className="flex flex-col gap-4">
@@ -117,7 +125,7 @@ export function SourcesTable({ sources, doctors }: { sources: SourceRow[]; docto
           <InputGroupInput
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Hledat zdroj nebo lékaře…"
+            placeholder={t("Hledat zdroj nebo lékaře…")}
           />
           <InputGroupAddon>
             <Search />
@@ -129,10 +137,10 @@ export function SourcesTable({ sources, doctors }: { sources: SourceRow[]; docto
         <Table className="table-fixed w-full min-w-[900px]">
           <TableHeader>
             <TableRow>
-              <TableHead className="pl-4">Zdroj</TableHead>
-              <TableHead className="w-[150px]">Stav</TableHead>
-              <TableHead className="w-[220px]">Lékař</TableHead>
-              <TableHead className="w-[110px] text-right pr-4">Akce</TableHead>
+              <TableHead className="pl-4">{t("Zdroj")}</TableHead>
+              <TableHead className="w-[150px]">{t("Stav")}</TableHead>
+              <TableHead className="w-[220px]">{t("Lékař")}</TableHead>
+              <TableHead className="w-[110px] text-right pr-4">{t("Akce")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -141,7 +149,7 @@ export function SourcesTable({ sources, doctors }: { sources: SourceRow[]; docto
             ) : (
               <TableRow>
                 <TableCell colSpan={4} className="py-8 text-center text-muted-foreground">
-                  Dotazu neodpovídá žádný zdroj.
+                  {t("Dotazu neodpovídá žádný zdroj.")}
                 </TableCell>
               </TableRow>
             )}

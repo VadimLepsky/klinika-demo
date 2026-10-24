@@ -1,3 +1,5 @@
+"use client"
+
 import {
   Accordion,
   AccordionContent,
@@ -14,10 +16,11 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { StatusChip } from "@/components/status-chip"
-import { formatCurrency, formatNumber, formatRate } from "@/lib/format"
+import { useI18n } from "@/lib/i18n/client"
 import type { DoctorLine } from "@/lib/queries/doctor"
 
 export function LinesSection({ lines }: { lines: DoctorLine[] }) {
+  const { t, formatCurrency, formatNumber, formatRate } = useI18n()
   return (
     <Card>
       <CardContent className="pt-0">
@@ -25,7 +28,7 @@ export function LinesSection({ lines }: { lines: DoctorLine[] }) {
           <AccordionItem value="lines" className="border-none">
             <AccordionTrigger className="py-4">
               <span className="flex items-center gap-2 text-sm font-semibold">
-                Jednotlivé položky
+                {t("Jednotlivé položky")}
                 <span className="text-muted-foreground font-normal">
                   ({formatNumber(lines.length)})
                 </span>
@@ -34,19 +37,19 @@ export function LinesSection({ lines }: { lines: DoctorLine[] }) {
             <AccordionContent>
               {lines.length === 0 ? (
                 <p className="py-6 text-center text-sm text-muted-foreground">
-                  Za vybraný měsíc nejsou žádné položky.
+                  {t("Za vybraný měsíc nejsou žádné položky.")}
                 </p>
               ) : (
                 <div className="max-h-[520px] overflow-auto rounded-md border border-border">
                   <Table className="table-fixed w-full min-w-[640px]">
                     <TableHeader className="sticky top-0 bg-card">
                       <TableRow>
-                        <TableHead className="w-[90px] text-right">Č. návštěvy</TableHead>
-                        <TableHead>Služba</TableHead>
-                        <TableHead className="w-[110px] text-right">Základ, Kč</TableHead>
-                        <TableHead className="w-[90px] text-right">Sazba</TableHead>
-                        <TableHead className="w-[110px] text-right">Provize, Kč</TableHead>
-                        <TableHead className="w-[140px]">Stav</TableHead>
+                        <TableHead className="w-[90px] text-right">{t("Č. návštěvy")}</TableHead>
+                        <TableHead>{t("Služba")}</TableHead>
+                        <TableHead className="w-[110px] text-right">{t("Základ, Kč")}</TableHead>
+                        <TableHead className="w-[90px] text-right">{t("Sazba")}</TableHead>
+                        <TableHead className="w-[110px] text-right">{t("Provize, Kč")}</TableHead>
+                        <TableHead className="w-[140px]">{t("Stav")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -57,9 +60,9 @@ export function LinesSection({ lines }: { lines: DoctorLine[] }) {
                           </TableCell>
                           <TableCell
                             className="max-w-0 truncate font-medium"
-                            title={line.item_name}
+                            title={t(line.item_name)}
                           >
-                            {line.item_name}
+                            {t(line.item_name)}
                           </TableCell>
                           <TableCell className="whitespace-nowrap text-right tabular-nums">
                             {formatCurrency(line.base_amount)}

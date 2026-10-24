@@ -21,10 +21,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { addServiceExclusion, endServiceExclusion } from "@/app/(app)/settings/actions"
-import { formatDate, nextMonthValue, monthInputToDate } from "@/lib/format"
+import { nextMonthValue, monthInputToDate } from "@/lib/format"
+import { useI18n } from "@/lib/i18n/client"
 import type { ServiceExclusionRow } from "@/lib/queries/settings"
 
 function AddExclusionDialog() {
+  const { t } = useI18n()
   const [open, setOpen] = useState(false)
   const [serviceId, setServiceId] = useState("")
   const [reason, setReason] = useState("")
@@ -33,13 +35,13 @@ function AddExclusionDialog() {
 
   const save = () => {
     if (!serviceId.trim()) {
-      toast.error("Zadejte ID služby.")
+      toast.error(t("Zadejte ID služby."))
       return
     }
     startTransition(async () => {
       const res = await addServiceExclusion(serviceId.trim(), reason.trim(), monthInputToDate(month))
       if (res.ok) {
-        toast.success("Výjimka byla přidána.")
+        toast.success(t("Výjimka byla přidána."))
         setOpen(false)
         setServiceId("")
         setReason("")
@@ -55,41 +57,41 @@ function AddExclusionDialog() {
         render={
           <Button size="sm">
             <Plus data-icon="inline-start" />
-            Přidat výjimku
+            {t("Přidat výjimku")}
           </Button>
         }
       />
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Nová výjimka služby</DialogTitle>
+          <DialogTitle>{t("Nová výjimka služby")}</DialogTitle>
           <DialogDescription>
-            Služba se od zvoleného měsíce nebude započítávat do provizí.
+            {t("Služba se od zvoleného měsíce nebude započítávat do provizí.")}
           </DialogDescription>
         </DialogHeader>
         <FieldGroup>
           <Field>
-            <Label htmlFor="service-id">ID služby</Label>
+            <Label htmlFor="service-id">{t("ID služby")}</Label>
             <Input
               id="service-id"
               inputMode="numeric"
               value={serviceId}
               onChange={(e) => setServiceId(e.target.value)}
-              placeholder="např. 10432"
+              placeholder={t("např. 10432")}
               disabled={pending}
             />
           </Field>
           <Field>
-            <Label htmlFor="reason">Důvod</Label>
+            <Label htmlFor="reason">{t("Důvod")}</Label>
             <Input
               id="reason"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder="např. EKG provádí sám lékař"
+              placeholder={t("např. EKG provádí sám lékař")}
               disabled={pending}
             />
           </Field>
           <Field>
-            <Label htmlFor="excl-from">Platí od</Label>
+            <Label htmlFor="excl-from">{t("Platí od")}</Label>
             <Input
               id="excl-from"
               type="month"
@@ -100,10 +102,10 @@ function AddExclusionDialog() {
           </Field>
         </FieldGroup>
         <DialogFooter>
-          <DialogClose render={<Button variant="ghost">Zrušit</Button>} />
+          <DialogClose render={<Button variant="ghost">{t("Zrušit")}</Button>} />
           <Button onClick={save} disabled={pending}>
             {pending ? <Spinner data-icon="inline-start" /> : null}
-            Přidat
+            {t("Přidat")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -112,13 +114,14 @@ function AddExclusionDialog() {
 }
 
 function ExclusionRowItem({ row }: { row: ServiceExclusionRow }) {
+  const { t, formatDate } = useI18n()
   const [pending, startTransition] = useTransition()
   const active = row.valid_to === null
 
   const end = () => {
     startTransition(async () => {
       const res = await endServiceExclusion(row.id)
-      if (res.ok) toast.success("Výjimka byla ukončena.")
+      if (res.ok) toast.success(t("Výjimka byla ukončena."))
       else toast.error(res.error)
     })
   }
@@ -127,24 +130,28 @@ function ExclusionRowItem({ row }: { row: ServiceExclusionRow }) {
     <TableRow>
       <TableCell
         className="max-w-0 truncate pl-4 font-medium text-foreground"
-        title={row.service_name}
+        title={t(row.service_name)}
       >
-        {row.service_name}
+        {t(row.service_name)}
       </TableCell>
-      <TableCell className="max-w-0 truncate text-muted-foreground" title={row.reason ?? undefined}>
-        {row.reason ?? "—"}
+      <TableCell className="max-w-0 truncate text-muted-foreground" title={row.reason ? t(row.reason) : undefined}>
+        {row.reason ? t(row.reason) : "—"}
       </TableCell>
       <TableCell className="whitespace-nowrap text-muted-foreground">
         {formatDate(row.valid_from)}
       </TableCell>
       <TableCell className="whitespace-nowrap">
-        {active ? <Badge>platná</Badge> : <Badge variant="outline">do {formatDate(row.valid_to)}</Badge>}
+        {active ? (
+          <Badge>{t("platná")}</Badge>
+        ) : (
+          <Badge variant="outline">{t("do {date}", { date: formatDate(row.valid_to) })}</Badge>
+        )}
       </TableCell>
       <TableCell className="whitespace-nowrap text-right pr-4">
         {active ? (
           <Button size="sm" variant="outline" onClick={end} disabled={pending}>
             {pending ? <Spinner data-icon="inline-start" /> : <X data-icon="inline-start" />}
-            Ukončit
+            {t("Ukončit")}
           </Button>
         ) : null}
       </TableCell>
@@ -153,11 +160,12 @@ function ExclusionRowItem({ row }: { row: ServiceExclusionRow }) {
 }
 
 export function ExclusionsManager({ rows }: { rows: ServiceExclusionRow[] }) {
+  const { t } = useI18n()
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm text-muted-foreground">
-          Služby záměrně vyloučené z provizí (např. ty, které provádí sám lékař).
+          {t("Služby záměrně vyloučené z provizí (např. ty, které provádí sám lékař).")}
         </p>
         <AddExclusionDialog />
       </div>
@@ -165,11 +173,11 @@ export function ExclusionsManager({ rows }: { rows: ServiceExclusionRow[] }) {
         <Table className="table-fixed w-full min-w-[760px]">
           <TableHeader>
             <TableRow>
-              <TableHead className="pl-4">Služba</TableHead>
-              <TableHead className="w-[220px]">Důvod</TableHead>
-              <TableHead className="w-[120px]">Platí od</TableHead>
-              <TableHead className="w-[140px]">Stav</TableHead>
-              <TableHead className="w-[130px] text-right pr-4">Akce</TableHead>
+              <TableHead className="pl-4">{t("Služba")}</TableHead>
+              <TableHead className="w-[220px]">{t("Důvod")}</TableHead>
+              <TableHead className="w-[120px]">{t("Platí od")}</TableHead>
+              <TableHead className="w-[140px]">{t("Stav")}</TableHead>
+              <TableHead className="w-[130px] text-right pr-4">{t("Akce")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -178,7 +186,7 @@ export function ExclusionsManager({ rows }: { rows: ServiceExclusionRow[] }) {
             ) : (
               <TableRow>
                 <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
-                  Žádné výjimky.
+                  {t("Žádné výjimky.")}
                 </TableCell>
               </TableRow>
             )}

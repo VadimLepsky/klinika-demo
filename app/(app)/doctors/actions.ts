@@ -1,5 +1,6 @@
 "use server"
 
+import { actionError } from "@/lib/i18n/server"
 import { revalidatePath } from "next/cache"
 import { db } from "@/lib/demo/store"
 import { writeAudit } from "@/lib/audit"
@@ -43,6 +44,6 @@ export async function togglePayout(masterId: string, period: string, paid: boole
     revalidatePath(`/doctors/${masterId}`)
     return { ok: true }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Chyba" }
+    return { ok: false, error: await actionError(e) }
   }
 }

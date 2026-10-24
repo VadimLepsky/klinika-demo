@@ -2,6 +2,7 @@ import "server-only"
 import { db } from "@/lib/demo/store"
 import { getDoctorDisplayNames } from "@/lib/doctor-name"
 import { periodKey } from "@/lib/format"
+import { getI18n } from "@/lib/i18n/server"
 import { getReferredVolumeByDoctor, getReferredVolumeRows, getReferredVolumeTotal } from "@/lib/queries/referred-volume"
 
 export type Period = {
@@ -223,6 +224,7 @@ export type DoctorReferralSeries = {
 /** Per-doctor referrals across all months, for the overlay multiselect. */
 export async function getDoctorReferralSeries(): Promise<DoctorReferralSeries[]> {
   const state = db()
+  const { t } = await getI18n()
 
   const referralsByDoctor = new Map<string, Map<string, number>>()
   for (const d of state.doctorMonthlyStats) {
@@ -239,7 +241,7 @@ export async function getDoctorReferralSeries(): Promise<DoctorReferralSeries[]>
       .map(([period, referrals]) => ({ period, referrals }))
     map.set(masterId, {
       master_id: masterId,
-      full_name: staff?.full_name ?? `Neznámý lékař #${masterId}`,
+      full_name: staff?.full_name ?? t("Neznámý lékař #{id}", { id: masterId }),
       points,
     })
   }

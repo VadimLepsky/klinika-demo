@@ -12,23 +12,24 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { AddServiceDialog } from "@/components/attention/add-service-dialog"
 import { IgnoreLineButton } from "@/components/attention/ignore-line-button"
 import { unignoreUnmatchedLine } from "@/app/(app)/attention/actions"
-import { formatCurrency, formatDateTime, formatMonth } from "@/lib/format"
+import { useI18n } from "@/lib/i18n/client"
 import type { BucketOption, ExistingCategory, IgnoredUnmatchedLine } from "@/lib/queries/attention"
 import type { UnresolvedUnmatchedLine } from "@/lib/queries/unresolved"
 
 function UnignoreButton({ itemId, itemName }: { itemId: string; itemName: string }) {
+  const { t } = useI18n()
   const [pending, startTransition] = useTransition()
   const restore = () => {
     startTransition(async () => {
       const res = await unignoreUnmatchedLine(itemId)
-      if (res.ok) toast.success(`«${itemName}» byla vrácena do seznamu.`)
+      if (res.ok) toast.success(t("«{name}» byla vrácena do seznamu.", { name: t(itemName) }))
       else toast.error(res.error)
     })
   }
   return (
     <Button variant="ghost" size="sm" onClick={restore} disabled={pending}>
       {pending ? <Spinner data-icon="inline-start" /> : <Undo2 data-icon="inline-start" />}
-      Vrátit
+      {t("Vrátit")}
     </Button>
   )
 }
@@ -44,6 +45,7 @@ export function UnmatchedLinesCard({
   buckets: BucketOption[]
   categories: ExistingCategory[]
 }) {
+  const { t, formatCurrency, formatDateTime, formatMonth } = useI18n()
   const [showIgnored, setShowIgnored] = useState(false)
 
   return (
@@ -52,19 +54,19 @@ export function UnmatchedLinesCard({
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <HelpCircle className="size-5 text-muted-foreground" />
-            <CardTitle>Nerozpoznané položky</CardTitle>
+            <CardTitle>{t("Nerozpoznané položky")}</CardTitle>
           </div>
           <div className="flex items-center gap-2">
             <Badge variant={lines.length > 0 ? "default" : "secondary"}>{lines.length}</Badge>
             {ignored.length > 0 ? (
               <Button variant="ghost" size="sm" onClick={() => setShowIgnored((v) => !v)}>
-                {showIgnored ? "Skrýt ignorované" : `Zobrazit ignorované (${ignored.length})`}
+                {showIgnored ? t("Skrýt ignorované") : t("Zobrazit ignorované ({n})", { n: ignored.length })}
               </Button>
             ) : null}
           </div>
         </div>
         <CardDescription>
-          Položky účtenek, které nejsou v číselníku služeb. Seskupeno podle období a služby.
+          {t("Položky účtenek, které nejsou v číselníku služeb. Seskupeno podle období a služby.")}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
@@ -73,11 +75,11 @@ export function UnmatchedLinesCard({
             <Table className="table-fixed w-full min-w-[720px]">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[120px] pl-4">Období</TableHead>
-                  <TableHead>Položka</TableHead>
-                  <TableHead className="w-[90px] text-right">Položek</TableHead>
-                  <TableHead className="w-[130px] text-right">Částka</TableHead>
-                  <TableHead className="w-[280px] text-right pr-4">Akce</TableHead>
+                  <TableHead className="w-[120px] pl-4">{t("Období")}</TableHead>
+                  <TableHead>{t("Položka")}</TableHead>
+                  <TableHead className="w-[90px] text-right">{t("Položek")}</TableHead>
+                  <TableHead className="w-[130px] text-right">{t("Částka")}</TableHead>
+                  <TableHead className="w-[280px] text-right pr-4">{t("Akce")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -86,8 +88,8 @@ export function UnmatchedLinesCard({
                     <TableCell className="whitespace-nowrap pl-4 text-muted-foreground">
                       {formatMonth(l.period)}
                     </TableCell>
-                    <TableCell className="max-w-0 truncate text-foreground" title={l.item_name}>
-                      {l.item_name}
+                    <TableCell className="max-w-0 truncate text-foreground" title={t(l.item_name)}>
+                      {t(l.item_name)}
                     </TableCell>
                     <TableCell className="text-right">
                       <Badge variant="secondary">{l.line_count}</Badge>
@@ -117,15 +119,15 @@ export function UnmatchedLinesCard({
               <EmptyMedia variant="icon">
                 <Check className="size-5" />
               </EmptyMedia>
-              <EmptyTitle>Vše vyřešeno</EmptyTitle>
-              <EmptyDescription>Žádné nerozpoznané položky.</EmptyDescription>
+              <EmptyTitle>{t("Vše vyřešeno")}</EmptyTitle>
+              <EmptyDescription>{t("Žádné nerozpoznané položky.")}</EmptyDescription>
             </EmptyHeader>
           </Empty>
         )}
 
         {showIgnored && ignored.length > 0 ? (
           <div className="flex flex-col gap-2 rounded-lg border border-dashed border-border p-3">
-            <span className="text-xs font-medium text-muted-foreground">Ignorované položky</span>
+            <span className="text-xs font-medium text-muted-foreground">{t("Ignorované položky")}</span>
             <div className="flex flex-col gap-2">
               {ignored.map((i) => (
                 <div
@@ -133,9 +135,9 @@ export function UnmatchedLinesCard({
                   className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-muted/50 px-3 py-2"
                 >
                   <div className="flex flex-col gap-0.5">
-                    <span className="text-sm text-foreground">{i.item_name}</span>
+                    <span className="text-sm text-foreground">{t(i.item_name)}</span>
                     <span className="text-xs text-muted-foreground">
-                      {i.reason ? `${i.reason} · ` : ""}
+                      {i.reason ? `${t(i.reason)} · ` : ""}
                       {i.user_email ?? "—"} · {formatDateTime(i.at)}
                     </span>
                   </div>

@@ -3,6 +3,7 @@
 import { db, newId } from "@/lib/demo/store"
 import { writeAudit } from "@/lib/audit"
 import { getActorEmail } from "@/lib/session"
+import { getI18n } from "@/lib/i18n/server"
 
 // ---------- správa uživatelů (pouze na pozvání) ----------
 
@@ -10,13 +11,14 @@ import { getActorEmail } from "@/lib/session"
  *  shown once, to be handed to the colleague in person. */
 export async function inviteUser(formData: FormData) {
   const actor = await getActorEmail() // admin only
+  const { t } = await getI18n()
   const role = formData.get("role") === "admin" ? "admin" : "viewer"
   const email = String(formData.get("email") ?? "").trim().toLowerCase()
   const fullName = String(formData.get("full_name") ?? "").trim()
-  if (!email || !fullName) throw new Error("email a jméno jsou povinné")
+  if (!email || !fullName) throw new Error(t("email a jméno jsou povinné"))
 
   const state = db()
-  if (state.users.some((u) => u.email === email)) throw new Error("Uživatel s tímto e-mailem už existuje")
+  if (state.users.some((u) => u.email === email)) throw new Error(t("Uživatel s tímto e-mailem už existuje"))
 
   const tempPassword = Array.from({ length: 9 }, () => {
     const chars = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789"
@@ -48,18 +50,19 @@ export async function inviteUser(formData: FormData) {
 /** Deletes a user from /settings/users. Admin only, not self, not the last admin. */
 export async function deleteUser(userId: string) {
   const actor = await getActorEmail() // admin only, otherwise throws
+  const { t } = await getI18n()
 
   const state = db()
   const me = state.users.find((u) => u.email === actor)
-  if (!me) throw new Error("Uživatel nebyl nalezen")
-  if (String(me.id) === String(userId)) throw new Error("Nelze smazat vlastní účet")
+  if (!me) throw new Error(t("Uživatel nebyl nalezen"))
+  if (String(me.id) === String(userId)) throw new Error(t("Nelze smazat vlastní účet"))
 
   const target = state.users.find((u) => u.id === userId)
-  if (!target) throw new Error("Uživatel nebyl nalezen")
+  if (!target) throw new Error(t("Uživatel nebyl nalezen"))
 
   if (target.role === "admin") {
     const adminCount = state.users.filter((u) => u.role === "admin").length
-    if (adminCount <= 1) throw new Error("Nelze smazat posledního administrátora")
+    if (adminCount <= 1) throw new Error(t("Nelze smazat posledního administrátora"))
   }
 
   // clear self-references so nothing points at the deleted user

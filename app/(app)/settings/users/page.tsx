@@ -4,11 +4,16 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/
 import { UsersTable } from "@/components/settings/users-table"
 import { getUsers } from "@/lib/queries/users"
 import { getSessionUser } from "@/lib/session"
+import { getI18n } from "@/lib/i18n/server"
 
-export const metadata = { title: "Uživatelé" }
+export async function generateMetadata() {
+  const { t } = await getI18n()
+  return { title: t("Uživatelé") }
+}
 export const dynamic = "force-dynamic"
 
 export default async function UsersPage() {
+  const { t } = await getI18n()
   const me = await getSessionUser()
 
   if (!me || me.role !== "admin") {
@@ -20,10 +25,9 @@ export default async function UsersPage() {
               <EmptyMedia variant="icon">
                 <ShieldAlert />
               </EmptyMedia>
-              <EmptyTitle>Nedostatečná oprávnění</EmptyTitle>
+              <EmptyTitle>{t("Nedostatečná oprávnění")}</EmptyTitle>
               <EmptyDescription>
-                Správa uživatelů je dostupná jen administrátorům. Pokud potřebujete přístup,
-                obraťte se na administrátora.
+                {t("Správa uživatelů je dostupná jen administrátorům. Pokud potřebujete přístup, obraťte se na administrátora.")}
               </EmptyDescription>
             </EmptyHeader>
           </Empty>
@@ -37,9 +41,9 @@ export default async function UsersPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Uživatelé</CardTitle>
+        <CardTitle>{t("Uživatelé")}</CardTitle>
         <CardDescription>
-          Zvěte kolegy a upravujte jejich role. Přístup se uděluje jen na pozvání.
+          {t("Zvěte kolegy a upravujte jejich role. Přístup se uděluje jen na pozvání.")}
         </CardDescription>
       </CardHeader>
       <CardContent>

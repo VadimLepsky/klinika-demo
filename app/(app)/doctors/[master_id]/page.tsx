@@ -11,7 +11,7 @@ import { LinesSection } from "@/components/doctor/lines-section"
 import { getDoctorKpiMonthly } from "@/lib/queries/kpi"
 import { MonthSelector } from "@/components/dashboard/month-selector"
 import { PayoutCheckbox } from "@/components/dashboard/payout-checkbox"
-import { formatMonth } from "@/lib/format"
+import { getI18n } from "@/lib/i18n/server"
 import { withPeriod } from "@/lib/period-link"
 import { SpecializationBadges } from "@/components/specializations/specialization-badges"
 import { getStaffSpecializations, isSpecializationId } from "@/lib/queries/specializations"
@@ -35,6 +35,7 @@ export default async function DoctorPage({
   searchParams: Promise<{ period?: string; spec?: string }>
 }) {
   const { master_id } = await params
+  const { t, formatMonth } = await getI18n()
   const { period: periodParam, spec: specParam } = await searchParams
   const spec = isSpecializationId(specParam) ? specParam : null
 
@@ -69,7 +70,7 @@ export default async function DoctorPage({
           render={
             <Link href={withPeriod("/", selected || null, spec)}>
               <ArrowLeft data-icon="inline-start" />
-              Zpět na přehled
+              {t("Zpět na přehled")}
             </Link>
           }
         />
@@ -77,9 +78,9 @@ export default async function DoctorPage({
           <div className="flex flex-col gap-2">
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-xl font-semibold text-balance text-foreground">{header.full_name}</h2>
-              {header.dismissed ? <Badge variant="secondary">ukončen</Badge> : null}
-              {header.is_doctor === false ? <Badge variant="outline">není lékař</Badge> : null}
-              {header.is_doctor === null ? <Badge variant="outline">neurčeno</Badge> : null}
+              {header.dismissed ? <Badge variant="secondary">{t("ukončen")}</Badge> : null}
+              {header.is_doctor === false ? <Badge variant="outline">{t("není lékař")}</Badge> : null}
+              {header.is_doctor === null ? <Badge variant="outline">{t("neurčeno")}</Badge> : null}
             </div>
             <SpecializationBadges specs={specsByMaster[master_id]} />
           </div>
@@ -97,7 +98,7 @@ export default async function DoctorPage({
                   doctorName={header.full_name}
                   showAriaLabel={false}
                 />
-                Vyplaceno
+                {t("Vyplaceno")}
               </Label>
             ) : null}
             <MonthSelector periods={periods} current={selected} />

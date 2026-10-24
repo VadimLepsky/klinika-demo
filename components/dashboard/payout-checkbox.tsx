@@ -5,7 +5,7 @@ import { toast } from "sonner"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { togglePayout } from "@/app/(app)/doctors/actions"
-import { formatDateTime } from "@/lib/format"
+import { useI18n } from "@/lib/i18n/client"
 
 export function PayoutCheckbox({
   masterId,
@@ -32,6 +32,7 @@ export function PayoutCheckbox({
   /** Set false when a visible <Label> already provides the accessible name (avoids a doubled name). */
   showAriaLabel?: boolean
 }) {
+  const { t, formatDateTime } = useI18n()
   const [paid, setPaid] = useState(initialPaid)
   const [paidBy, setPaidBy] = useState(initialPaidBy)
   const [paidAt, setPaidAt] = useState(initialPaidAt)
@@ -67,7 +68,7 @@ export function PayoutCheckbox({
       checked={paid}
       onCheckedChange={(value) => handleChange(value === true)}
       onClick={(e) => e.stopPropagation()}
-      aria-label={showAriaLabel ? `Vyplaceno — ${doctorName}` : undefined}
+      aria-label={showAriaLabel ? t("Vyplaceno — {name}", { name: doctorName }) : undefined}
       className={className}
     />
   )
@@ -78,7 +79,7 @@ export function PayoutCheckbox({
     <Tooltip>
       <TooltipTrigger render={<span className="inline-flex">{checkboxEl}</span>} />
       <TooltipContent>
-        {doctorName} — vyznačil: {paidBy ?? "…"}, {formatDateTime(paidAt)}
+        {t("{name} — vyznačil: {by}, {at}", { name: doctorName, by: paidBy ?? "…", at: formatDateTime(paidAt) })}
       </TooltipContent>
     </Tooltip>
   )

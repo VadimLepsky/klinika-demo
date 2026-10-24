@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/select"
 import { BucketSelect } from "@/components/settings/bucket-select"
 import { addUnmatchedService } from "@/app/(app)/attention/actions"
+import { useI18n } from "@/lib/i18n/client"
 import type { BucketOption, ExistingCategory } from "@/lib/queries/attention"
 
 export function AddServiceDialog({
@@ -41,6 +42,7 @@ export function AddServiceDialog({
   categories: ExistingCategory[]
   buckets: BucketOption[]
 }) {
+  const { t } = useI18n()
   const [open, setOpen] = useState(false)
   const [mode, setMode] = useState<"category" | "bucket">("category")
   const [categoryId, setCategoryId] = useState("")
@@ -48,32 +50,32 @@ export function AddServiceDialog({
   const [pending, startTransition] = useTransition()
 
   const categoryItems = categories.reduce<Record<string, string>>((acc, c) => {
-    acc[c.category_id] = c.category_name
+    acc[c.category_id] = t(c.category_name)
     return acc
   }, {})
 
   const save = () => {
     if (mode === "category") {
       if (!categoryId) {
-        toast.error("Zvolte kategorii.")
+        toast.error(t("Zvolte kategorii."))
         return
       }
       startTransition(async () => {
         const res = await addUnmatchedService(itemId, itemName, { mode: "category", categoryId })
         if (res.ok) {
-          toast.success("Služba byla přidána do číselníku.")
+          toast.success(t("Služba byla přidána do číselníku."))
           setOpen(false)
         } else toast.error(res.error)
       })
     } else {
       if (!bucket) {
-        toast.error("Zvolte pravidlo.")
+        toast.error(t("Zvolte pravidlo."))
         return
       }
       startTransition(async () => {
         const res = await addUnmatchedService(itemId, itemName, { mode: "bucket", bucket })
         if (res.ok) {
-          toast.success("Služba byla přidána do číselníku.")
+          toast.success(t("Služba byla přidána do číselníku."))
           setOpen(false)
         } else toast.error(res.error)
       })
@@ -86,45 +88,45 @@ export function AddServiceDialog({
         render={
           <Button variant="outline" size="sm">
             <PackagePlus data-icon="inline-start" />
-            Přidat službu
+            {t("Přidat službu")}
           </Button>
         }
       />
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Přidat službu do číselníku</DialogTitle>
+          <DialogTitle>{t("Přidat službu do číselníku")}</DialogTitle>
           <DialogDescription>
-            Položka se zaregistruje v číselníku služeb a z této karty zmizí.
+            {t("Položka se zaregistruje v číselníku služeb a z této karty zmizí.")}
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col gap-4 py-2">
           <div className="flex flex-col gap-2">
-            <Label htmlFor="service-name">Název služby</Label>
-            <Input id="service-name" value={itemName} readOnly disabled className="text-muted-foreground" />
+            <Label htmlFor="service-name">{t("Název služby")}</Label>
+            <Input id="service-name" value={t(itemName)} readOnly disabled className="text-muted-foreground" />
           </div>
 
           <Tabs value={mode} onValueChange={(v) => setMode(v as "category" | "bucket")}>
             <TabsList className="w-full">
               <TabsTrigger value="category" className="flex-1">
-                Kategorie
+                {t("Kategorie")}
               </TabsTrigger>
               <TabsTrigger value="bucket" className="flex-1">
-                Pravidlo přímo
+                {t("Pravidlo přímo")}
               </TabsTrigger>
             </TabsList>
             <TabsContent value="category" className="pt-3">
               <div className="flex flex-col gap-2">
-                <Label>Kategorie (zdědí její pravidlo)</Label>
+                <Label>{t("Kategorie (zdědí její pravidlo)")}</Label>
                 <Select value={categoryId} onValueChange={setCategoryId} disabled={pending} items={categoryItems}>
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Zvolte kategorii" />
+                    <SelectValue placeholder={t("Zvolte kategorii")} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
                       {categories.map((c) => (
                         <SelectItem key={c.category_id} value={c.category_id}>
-                          {c.category_name}
+                          {t(c.category_name)}
                         </SelectItem>
                       ))}
                     </SelectGroup>
@@ -134,13 +136,13 @@ export function AddServiceDialog({
             </TabsContent>
             <TabsContent value="bucket" className="pt-3">
               <div className="flex flex-col gap-2">
-                <Label>Pravidlo (výjimka jen pro tuto službu)</Label>
+                <Label>{t("Pravidlo (výjimka jen pro tuto službu)")}</Label>
                 <BucketSelect
                   buckets={buckets}
                   value={bucket}
                   onValueChange={setBucket}
                   disabled={pending}
-                  placeholder="Zvolte pravidlo"
+                  placeholder={t("Zvolte pravidlo")}
                 />
               </div>
             </TabsContent>
@@ -148,10 +150,10 @@ export function AddServiceDialog({
         </div>
 
         <DialogFooter>
-          <DialogClose render={<Button variant="ghost">Zrušit</Button>} />
+          <DialogClose render={<Button variant="ghost">{t("Zrušit")}</Button>} />
           <Button onClick={save} disabled={pending}>
             {pending ? <Spinner data-icon="inline-start" /> : null}
-            Uložit
+            {t("Uložit")}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -4,8 +4,10 @@ import { Moon, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
+import { useI18n } from "@/lib/i18n/client"
 
 export function ThemeToggle() {
+  const { t } = useI18n()
   const { resolvedTheme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
 
@@ -19,7 +21,7 @@ export function ThemeToggle() {
     <Button
       variant="ghost"
       size="icon"
-      aria-label={isDark ? "Zapnout světlý režim" : "Zapnout tmavý režim"}
+      aria-label={isDark ? t("Zapnout světlý režim") : t("Zapnout tmavý režim")}
       onClick={() => setTheme(isDark ? "light" : "dark")}
     >
       {isDark ? <Sun /> : <Moon />}

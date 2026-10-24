@@ -3,14 +3,23 @@ import type { Metadata, Viewport } from 'next'
 import { Inter, JetBrains_Mono } from 'next/font/google'
 import { ThemeProvider } from '@/components/theme-provider'
 import { Toaster } from '@/components/ui/sonner'
+import { I18nProvider } from '@/lib/i18n/client'
+import { getI18n } from '@/lib/i18n/server'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin', 'latin-ext'], variable: '--font-sans' })
 const jetbrainsMono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono' })
 
-export const metadata: Metadata = {
-  title: 'demo.clinic — Provize',
-  description: 'Interní analytika a správa provizí lékařů',
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getI18n()
+  return {
+    ...baseMetadata,
+    title: t('demo.clinic — Provize'),
+    description: t('Interní analytika a správa provizí lékařů'),
+  }
+}
+
+const baseMetadata: Metadata = {
   generator: 'v0.app',
   icons: {
     icon: [
@@ -36,17 +45,20 @@ export const viewport: Viewport = {
   ],
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const { locale } = await getI18n()
   return (
-    <html lang="cs" suppressHydrationWarning className="bg-background">
+    <html lang={locale} suppressHydrationWarning className="bg-background">
       <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          {children}
-          <Toaster />
+          <I18nProvider locale={locale}>
+            {children}
+            <Toaster />
+          </I18nProvider>
         </ThemeProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>

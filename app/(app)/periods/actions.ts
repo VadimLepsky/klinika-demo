@@ -1,5 +1,6 @@
 "use server"
 
+import { tr } from "@/lib/i18n/server"
 import { revalidatePath } from "next/cache"
 import { db } from "@/lib/demo/store"
 import { writeAudit } from "@/lib/audit"
@@ -18,16 +19,16 @@ type Result = { ok: true } | { ok: false; error: string }
  */
 export async function freezePeriod(period: string): Promise<Result> {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(period)) {
-    return { ok: false, error: "Neplatné období." }
+    return { ok: false, error: await tr("Neplatné období.") }
   }
 
   const all = await getPeriodsWithBlockers()
   const target = all.find((p) => p.period === period)
 
-  if (!target) return { ok: false, error: "Období nebylo nalezeno." }
-  if (target.status === "frozen") return { ok: false, error: "Měsíc už je zmrazen." }
+  if (!target) return { ok: false, error: await tr("Období nebylo nalezeno.") }
+  if (target.status === "frozen") return { ok: false, error: await tr("Měsíc už je zmrazen.") }
   if (!target.canFreeze) {
-    return { ok: false, error: "Měsíc má nedokončené položky — zmrazení není možné." }
+    return { ok: false, error: await tr("Měsíc má nedokončené položky — zmrazení není možné.") }
   }
 
   const email = await getActorEmail()

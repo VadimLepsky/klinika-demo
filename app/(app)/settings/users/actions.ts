@@ -1,5 +1,6 @@
 "use server"
 
+import { actionError, tr } from "@/lib/i18n/server"
 import { revalidatePath } from "next/cache"
 import { db } from "@/lib/demo/store"
 import { writeAudit } from "@/lib/audit"
@@ -12,16 +13,16 @@ type ActionResult = { ok: true } | { ok: false; error: string }
  * Admin-only, and a user can never change their own role (also enforced in the UI).
  */
 export async function changeUserRole(userId: string, role: "admin" | "viewer"): Promise<ActionResult> {
-  if (role !== "admin" && role !== "viewer") return { ok: false, error: "Neplatná role." }
+  if (role !== "admin" && role !== "viewer") return { ok: false, error: await tr("Neplatná role.") }
 
   const me = await getSessionUser()
-  if (!me || me.role !== "admin") return { ok: false, error: "Nedostatečná oprávnění." }
-  if (String(me.id) === String(userId)) return { ok: false, error: "Nelze změnit vlastní roli." }
+  if (!me || me.role !== "admin") return { ok: false, error: await tr("Nedostatečná oprávnění.") }
+  if (String(me.id) === String(userId)) return { ok: false, error: await tr("Nelze změnit vlastní roli.") }
 
   try {
     const state = db()
     const row = state.users.find((u) => u.id === userId)
-    if (!row) return { ok: false, error: "Uživatel nebyl nalezen." }
+    if (!row) return { ok: false, error: await tr("Uživatel nebyl nalezen.") }
     if (row.role === role) return { ok: true }
 
     const oldRole = row.role
@@ -37,6 +38,6 @@ export async function changeUserRole(userId: string, role: "admin" | "viewer"): 
     revalidatePath("/settings/users")
     return { ok: true }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Chyba" }
+    return { ok: false, error: await actionError(e) }
   }
 }

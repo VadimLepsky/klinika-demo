@@ -17,6 +17,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { deleteBucket } from "@/app/(app)/settings/actions"
+import { useI18n } from "@/lib/i18n/client"
 
 export function DeleteBucketButton({
   bucket,
@@ -27,6 +28,7 @@ export function DeleteBucketButton({
   label: string
   canDelete: boolean
 }) {
+  const { t } = useI18n()
   const [open, setOpen] = useState(false)
   const [pending, startTransition] = useTransition()
 
@@ -34,7 +36,7 @@ export function DeleteBucketButton({
     startTransition(async () => {
       const res = await deleteBucket(bucket)
       if (res.ok) {
-        toast.success(`Pravidlo «${label}» bylo smazáno.`)
+        toast.success(t("Pravidlo «{name}» bylo smazáno.", { name: t(label) }))
         setOpen(false)
       } else {
         toast.error(res.error)
@@ -50,12 +52,12 @@ export function DeleteBucketButton({
             <span tabIndex={0} className="inline-block">
               <Button variant="outline" size="sm" disabled>
                 <Trash2 data-icon="inline-start" />
-                Smazat
+                {t("Smazat")}
               </Button>
             </span>
           }
         />
-        <TooltipContent>Pravidlo se používá — má kategorie nebo provize.</TooltipContent>
+        <TooltipContent>{t("Pravidlo se používá — má kategorie nebo provize.")}</TooltipContent>
       </Tooltip>
     )
   }
@@ -64,19 +66,19 @@ export function DeleteBucketButton({
     <>
       <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
         <Trash2 data-icon="inline-start" />
-        Smazat
+        {t("Smazat")}
       </Button>
       <AlertDialog open={open} onOpenChange={setOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Smazat «{label}»?</AlertDialogTitle>
-            <AlertDialogDescription>Tuto akci nelze vrátit zpět.</AlertDialogDescription>
+            <AlertDialogTitle>{t("Smazat «{name}»?", { name: t(label) })}</AlertDialogTitle>
+            <AlertDialogDescription>{t("Tuto akci nelze vrátit zpět.")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={pending}>Zrušit</AlertDialogCancel>
+            <AlertDialogCancel disabled={pending}>{t("Zrušit")}</AlertDialogCancel>
             <AlertDialogAction onClick={confirm} disabled={pending}>
               {pending ? <Spinner data-icon="inline-start" /> : null}
-              Smazat
+              {t("Smazat")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

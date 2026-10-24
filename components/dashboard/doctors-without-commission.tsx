@@ -10,7 +10,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { formatMonth, formatNumber } from "@/lib/format"
+import { useI18n } from "@/lib/i18n/client"
 import { withPeriod } from "@/lib/period-link"
 import type { DoctorWithoutCommission } from "@/lib/queries/dashboard"
 
@@ -23,8 +23,9 @@ export function DoctorsWithoutCommission({
   period: string
   spec: string | null
 }) {
+  const { t, formatMonth, formatNumber } = useI18n()
   if (doctors.length === 0) {
-    return <span>bez provize: 0</span>
+    return <span>{t("bez provize: {n}", { n: 0 })}</span>
   }
 
   return (
@@ -35,22 +36,24 @@ export function DoctorsWithoutCommission({
             type="button"
             className="cursor-pointer underline decoration-dotted underline-offset-2 hover:text-foreground"
           >
-            bez provize: {formatNumber(doctors.length)}
+            {t("bez provize: {n}", { n: formatNumber(doctors.length) })}
           </button>
         }
       />
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Lékaři bez provize</DialogTitle>
-          <DialogDescription>{formatMonth(period)} — lékaři bez jakékoli připsané provize.</DialogDescription>
+          <DialogTitle>{t("Lékaři bez provize")}</DialogTitle>
+          <DialogDescription>
+            {t("{month} — lékaři bez jakékoli připsané provize.", { month: formatMonth(period) })}
+          </DialogDescription>
         </DialogHeader>
         <div className="max-h-[60vh] overflow-y-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Lékař</TableHead>
-                <TableHead className="w-[110px] text-right">Pacientů</TableHead>
-                <TableHead className="w-[140px] text-right">Odeslaní pacienti</TableHead>
+                <TableHead>{t("Lékař")}</TableHead>
+                <TableHead className="w-[110px] text-right">{t("Pacientů")}</TableHead>
+                <TableHead className="w-[140px] text-right">{t("Odeslaní pacienti")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
