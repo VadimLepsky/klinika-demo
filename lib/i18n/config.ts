@@ -1,7 +1,7 @@
 export const locales = ["cs", "en"] as const
 export type Locale = (typeof locales)[number]
 
-export const defaultLocale: Locale = "cs"
+export const defaultLocale: Locale = "en"
 
 /** Cookie that stores the chosen UI language. Set by the switcher and by /en, /cs links. */
 export const LOCALE_COOKIE = "locale"
